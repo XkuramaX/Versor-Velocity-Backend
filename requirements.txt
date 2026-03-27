@@ -1,0 +1,24 @@
+#Data Processing
+polars[all]==1.37.1
+
+#Excel Engines
+openpyxl>=3.1.5
+fsspec>=2026.1.0
+xlsx2csv>=0.8.4
+
+# Cache & Database
+redis>=7.1.0
+sqlalchemy>=2.0.25
+mysql-connector-python>=9.5.0
+
+# Performance
+connectorx>=0.4.5
+pyarrow>=23.0.0
+
+fastapi>=0.128.0
+uvicorn>=0.40.0
+numpy>=2.4.1
+python-multipart>=0.0.22
+psutil>=7.2.1
+httpx>=0.27.0
+chromadb>=1.0.0

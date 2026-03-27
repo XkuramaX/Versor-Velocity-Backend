@@ -1,0 +1,1411 @@
+{
+  "timestamp": "2026-02-20T12:18:57.797280",
+  "overall_stats": {
+    "total_duration": 12.96152138710022,
+    "total_api_calls": 22,
+    "successful_calls": 22,
+    "success_rate": 100.0
+  },
+  "test_results": {
+    "phase_1_ingestion": {
+      "duration": 11.342245817184448,
+      "datasets_loaded": 4,
+      "csv_files": 3,
+      "excel_sheets": 1
+    },
+    "phase_2_transforms": {
+      "duration": 0.5713331699371338,
+      "operations_completed": 4,
+      "filter_operations": 3,
+      "select_operations": 3,
+      "sort_operations": 3,
+      "rename_operations": 3
+    },
+    "phase_3_math_operations": {
+      "duration": 0.5852608680725098,
+      "math_nodes_created": 4,
+      "horizontal_operations": 0,
+      "custom_expressions": 0
+    },
+    "phase_4_string_operations": {
+      "duration": 0.3818361759185791,
+      "string_operations": 2,
+      "case_operations": 2,
+      "concat_operations": 1
+    },
+    "phase_5_advanced_analytics": {
+      "duration": 0.022113800048828125,
+      "groupby_operations": 1,
+      "pivot_operations": 1,
+      "analytics_nodes": 1
+    },
+    "phase_6_ml_operations": {
+      "duration": 0.029293060302734375,
+      "ml_models_created": 1,
+      "regression_operations": 1
+    },
+    "phase_7_data_cleaning": {
+      "duration": 0.003267049789428711,
+      "cleaning_operations": 0,
+      "drop_nulls": 1,
+      "drop_duplicates": 1
+    },
+    "phase_8_vector_operations": {
+      "duration": 0.0032181739807128906,
+      "vector_operations": 0,
+      "dot_product": 0,
+      "linear_multiply": 0
+    },
+    "phase_9_additional_apis": {
+      "duration": 0.004861116409301758,
+      "additional_operations": 3,
+      "health_check": 1,
+      "workflow_validation": 1,
+      "workflow_export": 1
+    },
+    "phase_10_stress_test": {
+      "duration": 0.01809215545654297,
+      "stress_operations": 3,
+      "avg_inspection_time": 0.006017605463663737
+    }
+  },
+  "endpoint_performance": {
+    "/nodes/io/upload_csv": {
+      "calls": 3,
+      "total_time": 10.505352973937988,
+      "errors": 0
+    },
+    "/nodes/io/upload_excel": {
+      "calls": 1,
+      "total_time": 0.836374044418335,
+      "errors": 0
+    },
+    "/nodes/transform/safe_filter": {
+      "calls": 1,
+      "total_time": 0.16471600532531738,
+      "errors": 0
+    },
+    "/nodes/transform/select": {
+      "calls": 1,
+      "total_time": 0.07131695747375488,
+      "errors": 0
+    },
+    "/nodes/transform/sort": {
+      "calls": 1,
+      "total_time": 0.2165980339050293,
+      "errors": 0
+    },
+    "/nodes/transform/rename": {
+      "calls": 1,
+      "total_time": 0.10551309585571289,
+      "errors": 0
+    },
+    "/nodes/math/horizontal": {
+      "calls": 4,
+      "total_time": 0.5827629566192627,
+      "errors": 0
+    },
+    "/nodes/string/case": {
+      "calls": 2,
+      "total_time": 0.3798513412475586,
+      "errors": 0
+    },
+    "/nodes/advanced/groupby": {
+      "calls": 1,
+      "total_time": 0.02007770538330078,
+      "errors": 0
+    },
+    "/nodes/ml/linear_regression": {
+      "calls": 1,
+      "total_time": 0.02526068687438965,
+      "errors": 0
+    },
+    "/health": {
+      "calls": 1,
+      "total_time": 0.0013918876647949219,
+      "errors": 0
+    },
+    "/workflow/validate-connection": {
+      "calls": 1,
+      "total_time": 0.002328157424926758,
+      "errors": 0
+    },
+    "/workflow/export": {
+      "calls": 1,
+      "total_time": 0.0011112689971923828,
+      "errors": 0
+    },
+    "/nodes/*/inspect": {
+      "calls": 3,
+      "total_time": 0.01805281639099121,
+      "errors": 0
+    }
+  },
+  "raw_metrics": {
+    "memory_usage": [
+      {
+        "rss": 106.40625,
+        "vms": 401610.203125,
+        "timestamp": 0.00016069412231445312
+      },
+      {
+        "rss": 402.515625,
+        "vms": 402239.296875,
+        "timestamp": 0.10062599182128906
+      },
+      {
+        "rss": 654.265625,
+        "vms": 402239.296875,
+        "timestamp": 0.2012166976928711
+      },
+      {
+        "rss": 1035.265625,
+        "vms": 402868.375,
+        "timestamp": 0.6385679244995117
+      },
+      {
+        "rss": 474.65625,
+        "vms": 402317.9375,
+        "timestamp": 0.7397136688232422
+      },
+      {
+        "rss": 539.21875,
+        "vms": 402317.9375,
+        "timestamp": 0.8398468494415283
+      },
+      {
+        "rss": 599.390625,
+        "vms": 402317.9375,
+        "timestamp": 0.9399077892303467
+      },
+      {
+        "rss": 662.453125,
+        "vms": 402317.9375,
+        "timestamp": 1.0430936813354492
+      },
+      {
+        "rss": 682.59375,
+        "vms": 402317.9375,
+        "timestamp": 1.148160696029663
+      },
+      {
+        "rss": 682.609375,
+        "vms": 402317.9375,
+        "timestamp": 1.2491939067840576
+      },
+      {
+        "rss": 682.609375,
+        "vms": 402317.9375,
+        "timestamp": 1.3493640422821045
+      },
+      {
+        "rss": 682.609375,
+        "vms": 402317.9375,
+        "timestamp": 1.4541378021240234
+      },
+      {
+        "rss": 682.609375,
+        "vms": 402317.9375,
+        "timestamp": 1.5576717853546143
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 1.6580028533935547
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 1.7587347030639648
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 1.8638060092926025
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 1.96396803855896
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.0691840648651123
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.17425274848938
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.278956651687622
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.3840179443359375
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.4896929264068604
+      },
+      {
+        "rss": 682.828125,
+        "vms": 402317.9375,
+        "timestamp": 2.594749927520752
+      },
+      {
+        "rss": 682.8125,
+        "vms": 402317.9375,
+        "timestamp": 2.69770884513855
+      },
+      {
+        "rss": 682.359375,
+        "vms": 402317.9375,
+        "timestamp": 2.802368640899658
+      },
+      {
+        "rss": 682.359375,
+        "vms": 402317.9375,
+        "timestamp": 2.906968832015991
+      },
+      {
+        "rss": 682.34375,
+        "vms": 402317.9375,
+        "timestamp": 3.012022018432617
+      },
+      {
+        "rss": 682.34375,
+        "vms": 402317.9375,
+        "timestamp": 3.1170737743377686
+      },
+      {
+        "rss": 682.34375,
+        "vms": 402317.9375,
+        "timestamp": 3.2191097736358643
+      },
+      {
+        "rss": 682.34375,
+        "vms": 402317.9375,
+        "timestamp": 3.324183702468872
+      },
+      {
+        "rss": 682.34375,
+        "vms": 402317.9375,
+        "timestamp": 3.428717851638794
+      },
+      {
+        "rss": 669.015625,
+        "vms": 402317.9375,
+        "timestamp": 3.5301849842071533
+      },
+      {
+        "rss": 707.875,
+        "vms": 403254.03125,
+        "timestamp": 3.6323018074035645
+      },
+      {
+        "rss": 1006.0,
+        "vms": 403254.03125,
+        "timestamp": 3.737388849258423
+      },
+      {
+        "rss": 1284.375,
+        "vms": 403254.03125,
+        "timestamp": 3.8395957946777344
+      },
+      {
+        "rss": 1604.234375,
+        "vms": 403254.03125,
+        "timestamp": 3.9406678676605225
+      },
+      {
+        "rss": 2061.359375,
+        "vms": 404190.125,
+        "timestamp": 4.288317918777466
+      },
+      {
+        "rss": 1261.234375,
+        "vms": 403371.03125,
+        "timestamp": 4.390131950378418
+      },
+      {
+        "rss": 1325.890625,
+        "vms": 403371.03125,
+        "timestamp": 4.493278980255127
+      },
+      {
+        "rss": 1392.015625,
+        "vms": 403371.03125,
+        "timestamp": 4.598335027694702
+      },
+      {
+        "rss": 1452.234375,
+        "vms": 403371.03125,
+        "timestamp": 4.699200630187988
+      },
+      {
+        "rss": 1515.484375,
+        "vms": 403371.03125,
+        "timestamp": 4.8004066944122314
+      },
+      {
+        "rss": 1578.375,
+        "vms": 403370.484375,
+        "timestamp": 4.9012978076934814
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.001508712768555
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.102771997451782
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.207831859588623
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.3089799880981445
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.409458875656128
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.513335704803467
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.613443851470947
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.713654041290283
+      },
+      {
+        "rss": 1604.921875,
+        "vms": 403370.484375,
+        "timestamp": 5.818131923675537
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 5.9194676876068115
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.02269983291626
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.127760887145996
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.2312750816345215
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.336347818374634
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.4413557052612305
+      },
+      {
+        "rss": 1604.953125,
+        "vms": 403370.484375,
+        "timestamp": 6.5447118282318115
+      },
+      {
+        "rss": 1598.8125,
+        "vms": 403370.484375,
+        "timestamp": 6.64979100227356
+      },
+      {
+        "rss": 1576.65625,
+        "vms": 403370.484375,
+        "timestamp": 6.75083589553833
+      },
+      {
+        "rss": 1409.765625,
+        "vms": 403370.484375,
+        "timestamp": 6.855904817581177
+      },
+      {
+        "rss": 1409.765625,
+        "vms": 403370.484375,
+        "timestamp": 6.960967779159546
+      },
+      {
+        "rss": 1409.765625,
+        "vms": 403370.484375,
+        "timestamp": 7.062088966369629
+      },
+      {
+        "rss": 1409.765625,
+        "vms": 403370.484375,
+        "timestamp": 7.162345886230469
+      },
+      {
+        "rss": 1381.234375,
+        "vms": 403370.484375,
+        "timestamp": 7.26475191116333
+      },
+      {
+        "rss": 1362.0,
+        "vms": 403370.484375,
+        "timestamp": 7.369840860366821
+      },
+      {
+        "rss": 1332.90625,
+        "vms": 403370.484375,
+        "timestamp": 7.4744110107421875
+      },
+      {
+        "rss": 1324.078125,
+        "vms": 403370.484375,
+        "timestamp": 7.582213878631592
+      },
+      {
+        "rss": 1271.859375,
+        "vms": 403370.484375,
+        "timestamp": 7.6838836669921875
+      },
+      {
+        "rss": 1268.3125,
+        "vms": 403370.484375,
+        "timestamp": 7.788939714431763
+      },
+      {
+        "rss": 1184.578125,
+        "vms": 403370.484375,
+        "timestamp": 7.892201900482178
+      },
+      {
+        "rss": 1164.3125,
+        "vms": 403370.484375,
+        "timestamp": 7.997271776199341
+      },
+      {
+        "rss": 1164.3125,
+        "vms": 403370.484375,
+        "timestamp": 8.104849815368652
+      },
+      {
+        "rss": 1039.96875,
+        "vms": 403370.484375,
+        "timestamp": 8.205062866210938
+      },
+      {
+        "rss": 976.1875,
+        "vms": 403370.484375,
+        "timestamp": 8.308993816375732
+      },
+      {
+        "rss": 975.71875,
+        "vms": 403370.484375,
+        "timestamp": 8.410857915878296
+      },
+      {
+        "rss": 973.671875,
+        "vms": 403370.484375,
+        "timestamp": 8.515989065170288
+      },
+      {
+        "rss": 973.671875,
+        "vms": 403370.484375,
+        "timestamp": 8.621057748794556
+      },
+      {
+        "rss": 973.671875,
+        "vms": 403370.484375,
+        "timestamp": 8.725645780563354
+      },
+      {
+        "rss": 973.671875,
+        "vms": 403370.484375,
+        "timestamp": 8.830699682235718
+      },
+      {
+        "rss": 973.671875,
+        "vms": 403370.484375,
+        "timestamp": 8.935762882232666
+      },
+      {
+        "rss": 961.046875,
+        "vms": 403370.484375,
+        "timestamp": 9.036498785018921
+      },
+      {
+        "rss": 929.234375,
+        "vms": 403370.484375,
+        "timestamp": 9.14156174659729
+      },
+      {
+        "rss": 895.359375,
+        "vms": 403370.484375,
+        "timestamp": 9.246615648269653
+      },
+      {
+        "rss": 873.4375,
+        "vms": 403370.484375,
+        "timestamp": 9.351740837097168
+      },
+      {
+        "rss": 820.140625,
+        "vms": 403370.484375,
+        "timestamp": 9.45238471031189
+      },
+      {
+        "rss": 810.34375,
+        "vms": 403370.484375,
+        "timestamp": 9.557464838027954
+      },
+      {
+        "rss": 998.078125,
+        "vms": 402962.78125,
+        "timestamp": 9.659518003463745
+      },
+      {
+        "rss": 1102.171875,
+        "vms": 403000.28125,
+        "timestamp": 9.764582872390747
+      },
+      {
+        "rss": 1102.171875,
+        "vms": 403000.28125,
+        "timestamp": 9.865230798721313
+      },
+      {
+        "rss": 1102.171875,
+        "vms": 403000.28125,
+        "timestamp": 9.970279932022095
+      },
+      {
+        "rss": 1102.171875,
+        "vms": 403000.28125,
+        "timestamp": 10.073278903961182
+      },
+      {
+        "rss": 1102.171875,
+        "vms": 403000.28125,
+        "timestamp": 10.173340797424316
+      },
+      {
+        "rss": 1102.1875,
+        "vms": 403000.28125,
+        "timestamp": 10.275482892990112
+      },
+      {
+        "rss": 1102.1875,
+        "vms": 403000.28125,
+        "timestamp": 10.380642890930176
+      },
+      {
+        "rss": 1102.1875,
+        "vms": 403000.28125,
+        "timestamp": 10.481693983078003
+      },
+      {
+        "rss": 423.46875,
+        "vms": 402031.15625,
+        "timestamp": 10.58421778678894
+      },
+      {
+        "rss": 423.46875,
+        "vms": 402031.15625,
+        "timestamp": 10.689294815063477
+      },
+      {
+        "rss": 423.46875,
+        "vms": 402031.15625,
+        "timestamp": 10.790960788726807
+      },
+      {
+        "rss": 423.46875,
+        "vms": 402031.15625,
+        "timestamp": 10.896029949188232
+      },
+      {
+        "rss": 423.46875,
+        "vms": 402031.15625,
+        "timestamp": 10.99623990058899
+      },
+      {
+        "rss": 423.484375,
+        "vms": 402031.15625,
+        "timestamp": 11.10130786895752
+      },
+      {
+        "rss": 423.484375,
+        "vms": 402031.15625,
+        "timestamp": 11.206370830535889
+      },
+      {
+        "rss": 423.484375,
+        "vms": 402031.15625,
+        "timestamp": 11.307268857955933
+      },
+      {
+        "rss": 125.453125,
+        "vms": 401693.640625,
+        "timestamp": 11.415380001068115
+      },
+      {
+        "rss": 125.453125,
+        "vms": 401693.640625,
+        "timestamp": 11.518925666809082
+      },
+      {
+        "rss": 125.609375,
+        "vms": 401693.640625,
+        "timestamp": 11.623226881027222
+      },
+      {
+        "rss": 125.609375,
+        "vms": 401693.640625,
+        "timestamp": 11.728354692459106
+      },
+      {
+        "rss": 125.703125,
+        "vms": 401693.640625,
+        "timestamp": 11.83411192893982
+      },
+      {
+        "rss": 125.859375,
+        "vms": 401693.640625,
+        "timestamp": 11.940576076507568
+      },
+      {
+        "rss": 125.859375,
+        "vms": 401693.640625,
+        "timestamp": 12.044704675674438
+      },
+      {
+        "rss": 125.890625,
+        "vms": 401693.640625,
+        "timestamp": 12.149898052215576
+      },
+      {
+        "rss": 125.9375,
+        "vms": 401693.640625,
+        "timestamp": 12.256653785705566
+      },
+      {
+        "rss": 125.984375,
+        "vms": 401693.640625,
+        "timestamp": 12.358293771743774
+      },
+      {
+        "rss": 125.984375,
+        "vms": 401693.640625,
+        "timestamp": 12.461457967758179
+      },
+      {
+        "rss": 126.0,
+        "vms": 401693.640625,
+        "timestamp": 12.566414833068848
+      },
+      {
+        "rss": 126.0,
+        "vms": 401693.640625,
+        "timestamp": 12.671481847763062
+      },
+      {
+        "rss": 126.015625,
+        "vms": 401693.640625,
+        "timestamp": 12.776602745056152
+      },
+      {
+        "rss": 126.0625,
+        "vms": 401693.640625,
+        "timestamp": 12.8815438747406
+      }
+    ],
+    "cpu_usage": [
+      {
+        "percent": 0.0,
+        "timestamp": 0.00016164779663085938
+      },
+      {
+        "percent": 62.5,
+        "timestamp": 0.10062980651855469
+      },
+      {
+        "percent": 54.8,
+        "timestamp": 0.2012176513671875
+      },
+      {
+        "percent": 54.3,
+        "timestamp": 0.6385757923126221
+      },
+      {
+        "percent": 26.5,
+        "timestamp": 0.7397148609161377
+      },
+      {
+        "percent": 17.8,
+        "timestamp": 0.8398468494415283
+      },
+      {
+        "percent": 17.1,
+        "timestamp": 0.9399077892303467
+      },
+      {
+        "percent": 16.9,
+        "timestamp": 1.0430946350097656
+      },
+      {
+        "percent": 13.4,
+        "timestamp": 1.1481616497039795
+      },
+      {
+        "percent": 10.7,
+        "timestamp": 1.249194860458374
+      },
+      {
+        "percent": 10.9,
+        "timestamp": 1.349364995956421
+      },
+      {
+        "percent": 10.6,
+        "timestamp": 1.4541387557983398
+      },
+      {
+        "percent": 10.9,
+        "timestamp": 1.5576767921447754
+      },
+      {
+        "percent": 9.6,
+        "timestamp": 1.6580049991607666
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 1.7587358951568604
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 1.863806962966919
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 1.9639687538146973
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.0691847801208496
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.17425274848938
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.2789578437805176
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.384018898010254
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.4896938800811768
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.594749927520752
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.697709798812866
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.8023698329925537
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 2.9069697856903076
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 3.0120227336883545
+      },
+      {
+        "percent": 0.0,
+        "timestamp": 3.1170737743377686
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 3.2191109657287598
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 3.3241848945617676
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 3.4287188053131104
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 3.5301859378814697
+      },
+      {
+        "percent": 8.4,
+        "timestamp": 3.632302761077881
+      },
+      {
+        "percent": 43.7,
+        "timestamp": 3.7373898029327393
+      },
+      {
+        "percent": 48.4,
+        "timestamp": 3.839597702026367
+      },
+      {
+        "percent": 68.4,
+        "timestamp": 3.940673828125
+      },
+      {
+        "percent": 79.2,
+        "timestamp": 4.288320064544678
+      },
+      {
+        "percent": 29.9,
+        "timestamp": 4.390132904052734
+      },
+      {
+        "percent": 17.0,
+        "timestamp": 4.493278980255127
+      },
+      {
+        "percent": 16.9,
+        "timestamp": 4.5983359813690186
+      },
+      {
+        "percent": 16.2,
+        "timestamp": 4.699207782745361
+      },
+      {
+        "percent": 17.6,
+        "timestamp": 4.800407648086548
+      },
+      {
+        "percent": 17.5,
+        "timestamp": 4.901298999786377
+      },
+      {
+        "percent": 13.8,
+        "timestamp": 5.00150990486145
+      },
+      {
+        "percent": 10.8,
+        "timestamp": 5.102772951126099
+      },
+      {
+        "percent": 11.6,
+        "timestamp": 5.2078328132629395
+      },
+      {
+        "percent": 11.3,
+        "timestamp": 5.308980941772461
+      },
+      {
+        "percent": 9.9,
+        "timestamp": 5.409459829330444
+      },
+      {
+        "percent": 10.1,
+        "timestamp": 5.513336896896362
+      },
+      {
+        "percent": 10.4,
+        "timestamp": 5.613444805145264
+      },
+      {
+        "percent": 6.0,
+        "timestamp": 5.7136547565460205
+      },
+      {
+        "percent": 10.6,
+        "timestamp": 5.818131923675537
+      },
+      {
+        "percent": 3.9,
+        "timestamp": 5.919468641281128
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.022701740264893
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.1277618408203125
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.231275796890259
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.336347818374634
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.441356658935547
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.544713020324707
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.649793863296509
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.750838041305542
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.855905771255493
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 6.960968971252441
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.062088966369629
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.162348747253418
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.2647528648376465
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.369840860366821
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.474411725997925
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.582215785980225
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.683884859085083
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.788940668106079
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.8922038078308105
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 7.997271776199341
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.10485291481018
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.205063819885254
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.308994770050049
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.410863876342773
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.515991687774658
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.621057748794556
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.725646734237671
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.830700874328613
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 8.935763835906982
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 9.036499977111816
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 9.141562938690186
+      },
+      {
+        "percent": 0.0,
+        "timestamp": 9.246616840362549
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 9.35174298286438
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 9.452386856079102
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 9.55746579170227
+      },
+      {
+        "percent": 54.2,
+        "timestamp": 9.659519910812378
+      },
+      {
+        "percent": 43.4,
+        "timestamp": 9.764582872390747
+      },
+      {
+        "percent": 7.7,
+        "timestamp": 9.86523175239563
+      },
+      {
+        "percent": 8.1,
+        "timestamp": 9.970280885696411
+      },
+      {
+        "percent": 8.4,
+        "timestamp": 10.07328176498413
+      },
+      {
+        "percent": 8.4,
+        "timestamp": 10.173341989517212
+      },
+      {
+        "percent": 0.9,
+        "timestamp": 10.275484800338745
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.380645751953125
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.48169493675232
+      },
+      {
+        "percent": 33.1,
+        "timestamp": 10.584218740463257
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.689296960830688
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.790961980819702
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.896029949188232
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 10.996245622634888
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 11.10130786895752
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 11.206371784210205
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 11.307269811630249
+      },
+      {
+        "percent": 6.6,
+        "timestamp": 11.415380954742432
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 11.518926858901978
+      },
+      {
+        "percent": 2.0,
+        "timestamp": 11.623227834701538
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 11.72841763496399
+      },
+      {
+        "percent": 1.0,
+        "timestamp": 11.834114789962769
+      },
+      {
+        "percent": 1.8,
+        "timestamp": 11.940577745437622
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 12.04470682144165
+      },
+      {
+        "percent": 1.6,
+        "timestamp": 12.149900674819946
+      },
+      {
+        "percent": 1.7,
+        "timestamp": 12.256654739379883
+      },
+      {
+        "percent": 1.5,
+        "timestamp": 12.35829472541809
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 12.461461067199707
+      },
+      {
+        "percent": 1.4,
+        "timestamp": 12.56641674041748
+      },
+      {
+        "percent": 0.1,
+        "timestamp": 12.671482801437378
+      },
+      {
+        "percent": 0.9,
+        "timestamp": 12.77660584449768
+      },
+      {
+        "percent": 1.3,
+        "timestamp": 12.881544828414917
+      }
+    ],
+    "timestamps": [],
+    "api_calls": [
+      {
+        "endpoint": "/nodes/io/upload_csv",
+        "method": "POST",
+        "duration": 3.61779522895813,
+        "status_code": 200,
+        "node_id": "source_4d0941",
+        "timestamp": 3.6181247234344482
+      },
+      {
+        "endpoint": "/nodes/io/upload_csv",
+        "method": "POST",
+        "duration": 5.974446058273315,
+        "status_code": 200,
+        "node_id": "source_545d2a",
+        "timestamp": 9.592789649963379
+      },
+      {
+        "endpoint": "/nodes/io/upload_csv",
+        "method": "POST",
+        "duration": 0.913111686706543,
+        "status_code": 200,
+        "node_id": "source_d59b5c",
+        "timestamp": 10.505971908569336
+      },
+      {
+        "endpoint": "/nodes/io/upload_excel",
+        "method": "POST",
+        "duration": 0.836374044418335,
+        "status_code": 200,
+        "node_id": "source_fff53c",
+        "timestamp": 11.34244990348816
+      },
+      {
+        "endpoint": "/nodes/transform/safe_filter",
+        "method": "POST",
+        "duration": 0.16471600532531738,
+        "status_code": 200,
+        "node_id": "filter_source_d59b5c",
+        "timestamp": 11.520180940628052
+      },
+      {
+        "endpoint": "/nodes/transform/select",
+        "method": "POST",
+        "duration": 0.07131695747375488,
+        "status_code": 200,
+        "node_id": "select_filter_source_d59b5c",
+        "timestamp": 11.591534852981567
+      },
+      {
+        "endpoint": "/nodes/transform/sort",
+        "method": "POST",
+        "duration": 0.2165980339050293,
+        "status_code": 200,
+        "node_id": "sort_select_filter_source_d59b5c",
+        "timestamp": 11.808166980743408
+      },
+      {
+        "endpoint": "/nodes/transform/rename",
+        "method": "POST",
+        "duration": 0.10551309585571289,
+        "status_code": 200,
+        "node_id": "rename_sort_select_filter_source_d59b5c",
+        "timestamp": 11.91377592086792
+      },
+      {
+        "endpoint": "/nodes/math/horizontal",
+        "method": "POST",
+        "duration": 0.188493013381958,
+        "status_code": 200,
+        "node_id": "hsum_filter_source_d59b5c",
+        "timestamp": 12.102386951446533
+      },
+      {
+        "endpoint": "/nodes/math/horizontal",
+        "method": "POST",
+        "duration": 0.10301589965820312,
+        "status_code": 200,
+        "node_id": "hsum_select_filter_source_d59b5c",
+        "timestamp": 12.205443859100342
+      },
+      {
+        "endpoint": "/nodes/math/horizontal",
+        "method": "POST",
+        "duration": 0.14522695541381836,
+        "status_code": 200,
+        "node_id": "hsum_sort_select_filter_source_d59b5c",
+        "timestamp": 12.350709915161133
+      },
+      {
+        "endpoint": "/nodes/math/horizontal",
+        "method": "POST",
+        "duration": 0.1460270881652832,
+        "status_code": 200,
+        "node_id": "hsum_rename_sort_select_filter_source_d59b5c",
+        "timestamp": 12.496769666671753
+      },
+      {
+        "endpoint": "/nodes/string/case",
+        "method": "POST",
+        "duration": 0.17852115631103516,
+        "status_code": 200,
+        "node_id": "upper_source_d59b5c",
+        "timestamp": 12.677682876586914
+      },
+      {
+        "endpoint": "/nodes/string/case",
+        "method": "POST",
+        "duration": 0.20133018493652344,
+        "status_code": 200,
+        "node_id": "lower_upper_source_d59b5c",
+        "timestamp": 12.879055738449097
+      },
+      {
+        "endpoint": "/nodes/advanced/groupby",
+        "method": "POST",
+        "duration": 0.02007770538330078,
+        "status_code": 200,
+        "node_id": "groupby_source_d59b5c",
+        "timestamp": 12.90107774734497
+      },
+      {
+        "endpoint": "/nodes/ml/linear_regression",
+        "method": "POST",
+        "duration": 0.02526068687438965,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.932384729385376
+      },
+      {
+        "endpoint": "/health",
+        "method": "GET",
+        "duration": 0.0013918876647949219,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.940302848815918
+      },
+      {
+        "endpoint": "/workflow/validate-connection",
+        "method": "POST",
+        "duration": 0.002328157424926758,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.942643880844116
+      },
+      {
+        "endpoint": "/workflow/export",
+        "method": "GET",
+        "duration": 0.0011112689971923828,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.943763017654419
+      },
+      {
+        "endpoint": "/nodes/*/inspect",
+        "method": "GET",
+        "duration": 0.005902767181396484,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.949679851531982
+      },
+      {
+        "endpoint": "/nodes/*/inspect",
+        "method": "GET",
+        "duration": 0.00988006591796875,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.959573030471802
+      },
+      {
+        "endpoint": "/nodes/*/inspect",
+        "method": "GET",
+        "duration": 0.0022699832916259766,
+        "status_code": 200,
+        "node_id": null,
+        "timestamp": 12.961856842041016
+      }
+    ],
+    "execution_times": [],
+    "node_operations": []
+  }
+}

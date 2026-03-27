@@ -1,0 +1,7 @@
+store_id,store_name,product,revenue,month
+B1,Airport Store,Laptop,52000,Jan
+B1,Airport Store,Phone,41000,Jan
+B2,Online Store,Laptop,95000,Jan
+B2,Online Store,Phone,78000,Feb
+B2,Online Store,Tablet,45000,Feb
+B3,Outlet Store,Laptop,28000,Feb

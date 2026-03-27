@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.sqlite
+cache/
+server_uploads/
+dag_outputs/
+workflow_audit/
+venv/
+.env
+*.log
+.git
+.gitignore

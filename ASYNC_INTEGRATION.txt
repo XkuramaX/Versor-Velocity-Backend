@@ -1,0 +1,9 @@
+# Add this to NodesApiComplete.py after line 38 (after workflow = WorkflowManager(engine))
+
+# Import async router
+try:
+    from api.AsyncApi import router as async_router
+    app.include_router(async_router)
+    print("✓ Async API endpoints enabled")
+except ImportError:
+    print("⚠ Async API not available - install: pip install celery redis")

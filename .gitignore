@@ -1,0 +1,7 @@
+dag_outputs/
+workflow_audit/
+server_uploads/
+numeric_heavy.csv
+large_mixed.csv
+string_heavy.csv
+test_excel.xlsx

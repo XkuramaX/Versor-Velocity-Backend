@@ -1,0 +1,16 @@
+product_id,product_name,category,unit_price,units_sold,cost_price,region,sale_date
+1,Widget Pro,Electronics,299.99,45,180.00,North,2024-01-15
+2,Gadget X,Electronics,149.99,120,80.00,South,2024-01-16
+3,Office Chair,Furniture,399.99,30,200.00,North,2024-02-10
+4,Desk Lamp,Furniture,49.99,200,20.00,East,2024-02-11
+5,Laptop Stand,Electronics,79.99,85,35.00,West,2024-01-20
+6,Keyboard,Electronics,129.99,95,60.00,North,2024-01-22
+7,Monitor,Electronics,449.99,25,250.00,South,2024-03-01
+8,Bookshelf,Furniture,199.99,40,90.00,East,2024-03-05
+9,Headphones,Electronics,199.99,110,90.00,West,2024-02-20
+10,Standing Desk,Furniture,599.99,15,300.00,North,2024-03-10
+11,Mouse,Electronics,39.99,300,15.00,South,2024-01-25
+12,Webcam,Electronics,89.99,75,40.00,East,2024-02-15
+13,Filing Cabinet,Furniture,249.99,20,120.00,West,2024-03-12
+14,USB Hub,Electronics,29.99,400,10.00,North,2024-01-30
+15,Ergonomic Chair,Furniture,699.99,12,350.00,South,2024-03-15

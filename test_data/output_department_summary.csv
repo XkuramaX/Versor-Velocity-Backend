@@ -1,0 +1,5 @@
+department,location,manager,budget,headcount,avg_salary,total_bonus_spend,avg_performance_score,high_performer_count
+Engineering,Building A,Sarah Tech,500000,19,85318,178500,3.28,6
+HR,Building C,Linda HR,200000,25,82148,210000,3.27,8
+Marketing,Building B,Tom Marketing,250000,30,77641,196000,2.93,3
+Sales,Building B,Mike Sales,300000,26,77800,183500,2.77,5

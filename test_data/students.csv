@@ -1,0 +1,16 @@
+student_id,first_name,last_name,math_score,science_score,english_score,grade,attendance_pct,city
+1,Alice,Johnson,92,88,95,A,98.5,New York
+2,Bob,Smith,75,82,70,B,92.0,Chicago
+3,Carol,Davis,88,91,85,A,95.5,New York
+4,David,Wilson,60,65,72,C,85.0,Houston
+5,Eve,Brown,95,97,93,A,99.0,Chicago
+6,Frank,Miller,70,68,75,B,88.5,Houston
+7,Grace,Taylor,85,89,88,A,96.0,New York
+8,Henry,Anderson,55,60,65,D,78.0,Chicago
+9,Iris,Thomas,90,85,92,A,97.5,Houston
+10,Jack,Jackson,78,80,76,B,91.0,New York
+11,Kate,White,65,70,68,C,83.0,Chicago
+12,Liam,Harris,88,92,90,A,94.5,Houston
+13,Mia,Martin,72,75,80,B,89.0,New York
+14,Noah,Garcia,58,62,60,D,80.0,Chicago
+15,Olivia,Martinez,94,96,91,A,98.0,Houston

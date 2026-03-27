@@ -1,0 +1,7 @@
+store_id,store_name,product,revenue,month
+A1,Downtown Store,Laptop,45000,Jan
+A1,Downtown Store,Phone,32000,Jan
+A1,Downtown Store,Tablet,18000,Feb
+A2,Mall Store,Laptop,38000,Jan
+A2,Mall Store,Phone,28000,Feb
+A2,Mall Store,Tablet,22000,Feb
