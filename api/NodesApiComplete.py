@@ -734,7 +734,85 @@ async def matrix_transpose_node(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- 12. MACHINE LEARNING ---
+# --- 12. NEW UTILITY NODES ---
+
+@app.post("/nodes/util/add_literal_column")
+async def add_literal_column_node(
+    parent_id: str = Query(...),
+    column: str = Body(...),
+    value: Any = Body(...),
+    dtype: str = Body("string"),
+):
+    try:
+        res_id = workflow.create_node("add_literal_column", {"column": column, "value": value, "dtype": dtype}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/util/range_bucket")
+async def range_bucket_node(
+    parent_id: str = Query(...),
+    column: str = Body(...),
+    bins: List[float] = Body(...),
+    labels: List[str] = Body(...),
+    new_col: str = Body("bucket"),
+):
+    try:
+        res_id = workflow.create_node("range_bucket", {"column": column, "bins": bins, "labels": labels, "new_col": new_col}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/util/date_offset")
+async def date_offset_node(
+    parent_id: str = Query(...),
+    column: str = Body(...),
+    offset: int = Body(...),
+    unit: str = Body("days"),
+    new_col: Optional[str] = Body(None),
+):
+    try:
+        params = {"column": column, "offset": offset, "unit": unit}
+        if new_col:
+            params["new_col"] = new_col
+        res_id = workflow.create_node("date_offset", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/util/crosstab")
+async def crosstab_node(
+    parent_id: str = Query(...),
+    index: str = Body(...),
+    columns: str = Body(...),
+    values: Optional[str] = Body(None),
+    agg: str = Body("count"),
+):
+    try:
+        params = {"index": index, "columns": columns, "agg": agg}
+        if values:
+            params["values"] = values
+        res_id = workflow.create_node("crosstab", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/util/cumulative_product")
+async def cumulative_product_node(
+    parent_id: str = Query(...),
+    column: str = Body(...),
+    new_col: Optional[str] = Body(None),
+):
+    try:
+        params = {"column": column}
+        if new_col:
+            params["new_col"] = new_col
+        res_id = workflow.create_node("cumulative_product", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- 13. MACHINE LEARNING ---
 
 @app.post("/nodes/ml/linear_regression")
 async def linear_regression_node(

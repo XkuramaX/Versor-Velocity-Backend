@@ -597,3 +597,95 @@ class DataframeController:
             "shape": [row_count, len(schema)],
             "memory_usage": f"{row_count * len(schema) * 8 / 1024:.1f} KB"
         }
+
+    # ── NEW NODES (for roll-rate analysis and general use) ────────────────────
+
+    @safe_node_execution
+    def add_literal_column(self, node_id: str, column: str, value, dtype: str = "string") -> str:
+        """Add a column with a constant value to every row."""
+        new_id = f"literal_{node_id}"
+        type_map = {"string": pl.Utf8, "integer": pl.Int64, "float": pl.Float64, "boolean": pl.Boolean}
+        pl_type = type_map.get(dtype, pl.Utf8)
+        lf = self.get_node_data(node_id).with_columns(pl.lit(value).cast(pl_type).alias(column))
+        return self.save_node_result(lf, new_id)
+
+    @safe_node_execution
+    def range_bucket(self, node_id: str, column: str, bins: List, labels: List[str], new_col: str = "bucket") -> str:
+        """Bucket a numeric column into labeled ranges.
+        bins: [0, 30, 60, 90] → ranges: <=0, 1-30, 31-60, 61-90, 90+
+        labels: ["0", "1-30", "31-60", "61-90", "90+"] (len = len(bins) + 1)
+        """
+        new_id = f"bucket_{node_id}"
+        col = pl.col(column).cast(pl.Float64)
+
+        if len(labels) != len(bins) + 1:
+            raise ValueError(f"labels length ({len(labels)}) must be bins length ({len(bins)}) + 1")
+
+        # Build chained when/then/otherwise
+        expr = pl.when(col <= bins[0]).then(pl.lit(labels[0]))
+        for i in range(1, len(bins)):
+            expr = expr.when(col <= bins[i]).then(pl.lit(labels[i]))
+        expr = expr.otherwise(pl.lit(labels[-1]))
+
+        lf = self.get_node_data(node_id).with_columns(expr.alias(new_col))
+        return self.save_node_result(lf, new_id)
+
+    @safe_node_execution
+    def date_offset(self, node_id: str, column: str, offset: int, unit: str = "days", new_col: str = None) -> str:
+        """Add/subtract a fixed duration from a date column.
+        unit: 'days', 'weeks', 'months', 'years'
+        """
+        new_id = f"dateoff_{node_id}"
+        target = new_col or f"{column}_offset"
+
+        if unit == "days":
+            dur = pl.duration(days=offset)
+        elif unit == "weeks":
+            dur = pl.duration(weeks=offset)
+        elif unit == "months":
+            # Polars doesn't have duration(months), use offset_by
+            lf = self.get_node_data(node_id).with_columns(
+                pl.col(column).cast(pl.Date).dt.offset_by(f"{offset}mo").alias(target)
+            )
+            return self.save_node_result(lf, new_id)
+        elif unit == "years":
+            lf = self.get_node_data(node_id).with_columns(
+                pl.col(column).cast(pl.Date).dt.offset_by(f"{offset}y").alias(target)
+            )
+            return self.save_node_result(lf, new_id)
+        else:
+            raise ValueError(f"Unknown unit '{unit}'. Use: days, weeks, months, years")
+
+        lf = self.get_node_data(node_id).with_columns(
+            (pl.col(column).cast(pl.Date) + dur).alias(target)
+        )
+        return self.save_node_result(lf, new_id)
+
+    @safe_node_execution
+    def crosstab(self, node_id: str, index: str, columns: str, values: str = None, agg: str = "count") -> str:
+        """Cross-tabulation of two categorical columns.
+        If values is None and agg is 'count', counts occurrences.
+        """
+        new_id = f"crosstab_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        if values is None or agg == "count":
+            # Count occurrences
+            ct = df.group_by([index, columns]).len().rename({"len": "_count"})
+            result = ct.pivot(values="_count", index=index, on=columns, aggregate_function="sum")
+        else:
+            result = df.pivot(values=values, index=index, on=columns, aggregate_function=agg)
+
+        result = result.fill_null(0)
+        lf = result.lazy()
+        return self.save_node_result(lf, new_id)
+
+    @safe_node_execution
+    def cumulative_product(self, node_id: str, column: str, new_col: str = None) -> str:
+        """Compute cumulative product along a column."""
+        new_id = f"cumprod_{node_id}"
+        target = new_col or f"{column}_cumprod"
+        lf = self.get_node_data(node_id).with_columns(
+            pl.col(column).cast(pl.Float64).cum_prod().alias(target)
+        )
+        return self.save_node_result(lf, new_id)

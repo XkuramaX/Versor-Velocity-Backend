@@ -92,6 +92,8 @@ class WorkflowManager:
         # ML
         'linear_regression_node', 'logistic_regression_prediction',
         'correlation_matrix_1d',
+        # New nodes
+        'add_literal_column', 'range_bucket', 'date_offset', 'crosstab', 'cumulative_product',
     }
 
     # ── Param whitelist (prevents mass-assignment) ────────────────────────────
@@ -150,6 +152,12 @@ class WorkflowManager:
         'linear_regression_node':         {'target', 'features'},
         'logistic_regression_prediction': {'features', 'weights'},
         'correlation_matrix_1d':          {'columns'},
+        # New nodes
+        'add_literal_column':             {'column', 'value', 'dtype'},
+        'range_bucket':                   {'column', 'bins', 'labels', 'new_col'},
+        'date_offset':                    {'column', 'offset', 'unit', 'new_col'},
+        'crosstab':                       {'index', 'columns', 'values', 'agg'},
+        'cumulative_product':             {'column', 'new_col'},
     }
 
     def _execute_controller_method(self, node_type: str, params: Dict[str, Any], parent_id: str):

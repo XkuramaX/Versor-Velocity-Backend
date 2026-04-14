@@ -407,6 +407,53 @@ NODE_DOCUMENTS = [
         "examples": [],
     },
 
+    # ── UTILITY NODES (NEW) ─────────────────────────────────────────────────
+    {
+        "id": "add_literal_column",
+        "category": "Utility",
+        "name": "Add Constant Column",
+        "description": "Adds a new column with a constant value to every row. Use for tagging, labeling, or adding fixed metadata.",
+        "config_schema": {"column": "tag", "value": "2023Q1", "dtype": "string"},
+        "use_cases": ["Add a tag column", "Add constant value", "Label all rows", "Add metadata column"],
+        "examples": ["Add period tag: {column: 'period', value: '2023Q1', dtype: 'string'}"],
+    },
+    {
+        "id": "range_bucket",
+        "category": "Utility",
+        "name": "Range Bucket",
+        "description": "Buckets a numeric column into labeled ranges. Bins define boundaries, labels name each range.",
+        "config_schema": {"column": "DPD", "bins": [0, 30, 60, 90], "labels": ["0", "1-30", "31-60", "61-90", "90+"], "new_col": "bucket"},
+        "use_cases": ["DPD bucketing", "Age groups", "Salary bands", "Score ranges", "Bin numeric values"],
+        "examples": ["DPD buckets: {column: 'DPD', bins: [0,30,60,90], labels: ['0','1-30','31-60','61-90','90+'], new_col: 'bucket'}"],
+    },
+    {
+        "id": "date_offset",
+        "category": "Utility",
+        "name": "Date Offset",
+        "description": "Adds or subtracts a fixed duration from a date column. Supports days, weeks, months, years.",
+        "config_schema": {"column": "date", "offset": 1, "unit": "months", "new_col": "next_month"},
+        "use_cases": ["Shift dates forward/backward", "Create next month column", "Date arithmetic"],
+        "examples": ["Next month: {column: 'month', offset: 1, unit: 'months', new_col: 'next_month'}"],
+    },
+    {
+        "id": "crosstab",
+        "category": "Utility",
+        "name": "Cross Tabulation",
+        "description": "Creates a cross-tabulation of two categorical columns. Counts or aggregates values.",
+        "config_schema": {"index": "from_bucket", "columns": "to_bucket", "values": None, "agg": "count"},
+        "use_cases": ["Transition matrix", "Contingency table", "Cross-tab two categories"],
+        "examples": ["Transition counts: {index: 'from_bucket', columns: 'to_bucket', agg: 'count'}"],
+    },
+    {
+        "id": "cumulative_product",
+        "category": "Utility",
+        "name": "Cumulative Product",
+        "description": "Computes the cumulative product along a column. Useful for chain probabilities.",
+        "config_schema": {"column": "probability", "new_col": "chain_prob"},
+        "use_cases": ["Chain probability", "Compound interest", "Cumulative multiplication"],
+        "examples": ["Chain prob: {column: 'transition_prob', new_col: 'chain_prob'}"],
+    },
+
     # ── MACHINE LEARNING ────────────────────────────────────────────────────
     {
         "id": "linear_regression",

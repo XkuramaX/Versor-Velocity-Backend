@@ -228,48 +228,102 @@ async def step_generate(feasible_steps: list[str], file_schemas: list[dict], rel
 {steps_text}
 
 === OUTPUT FORMAT ===
-Return ONLY a JSON object with "nodes" and "edges" arrays.
+Return ONLY a JSON object with "nodes" and "edges" arrays. No explanation.
 
-Node: {{"id": "<type>_<N>", "type": "custom", "position": {{"x": <x>, "y": <y>}}, "data": {{"label": "<label>", "nodeType": "<type>", "config": {{...}}, "status": "idle", "backendNodeId": null}}}}
-Edge: {{"id": "e<src>-<tgt>", "source": "<src>", "target": "<tgt>", "type": "smoothstep", "animated": true}}
+Here is a CONCRETE EXAMPLE of the exact format required:
+{{
+  "nodes": [
+    {{"id": "upload_csv_1", "type": "custom", "position": {{"x": 100, "y": 200}}, "data": {{"label": "data.csv", "nodeType": "upload_csv", "config": {{}}, "status": "idle", "backendNodeId": null}}}},
+    {{"id": "math_horizontal_2", "type": "custom", "position": {{"x": 340, "y": 200}}, "data": {{"label": "Sum A+B", "nodeType": "math_horizontal", "config": {{"columns": ["A", "B"], "new_col": "C", "op": "sum"}}, "status": "idle", "backendNodeId": null}}}}
+  ],
+  "edges": [
+    {{"id": "eupload_csv_1-math_horizontal_2", "source": "upload_csv_1", "target": "math_horizontal_2", "type": "smoothstep", "animated": true}}
+  ]
+}}
 
-Rules:
-- x starts at 100, increments by 240. Single chain: y=200. Branches: y±160.
-- First node(s) MUST be upload_csv (one per input file), label = filename.
-- Unique IDs: upload_csv_1, safe_filter_2, math_horizontal_3, etc.
-- Config fields MUST match the node specs exactly.
-- Column names MUST match the file schemas."""
+CRITICAL RULES:
+- Every node MUST have: id, type="custom", position, data
+- data MUST have: label, nodeType, config, status="idle", backendNodeId=null
+- nodeType MUST be one of the available node types listed above
+- The node ID prefix MUST match the nodeType (e.g. upload_csv_1, math_horizontal_2)
+- config MUST match the Config schema shown in the node specs
+- First node(s) MUST be upload_csv with label = the filename
+- x starts at 100, increments by 240 per step. y=200 for linear chains."""
 
     raw = await _llm(prompt)
     return _extract_json(raw)
 
 
 async def step_validate_and_fix(workflow: dict, attempt: int = 0) -> dict:
-    """Step 4: Validate and optionally retry."""
-    is_valid, errors = _validate_workflow(workflow)
-    if is_valid:
-        return workflow
+    """Step 4: Validate and fix common LLM output issues."""
+    nodes = workflow.get("nodes", [])
+    edges = workflow.get("edges", [])
 
-    if attempt >= 1:
-        # Fix what we can programmatically
-        nodes = workflow.get("nodes", [])
-        # Fix invalid node types
-        for n in nodes:
-            nt = n.get("data", {}).get("nodeType", "")
-            if nt not in VALID_NODE_TYPES:
-                n["data"]["nodeType"] = "select"  # safe fallback
-            if n.get("type") != "custom":
-                n["type"] = "custom"
+    if not isinstance(nodes, list):
+        nodes = []
+    if not isinstance(edges, list):
+        edges = []
+
+    # Fix each node
+    seen_ids = set()
+    for n in nodes:
+        # Ensure type is "custom"
+        n["type"] = "custom"
+
+        # Ensure data dict exists
+        if "data" not in n or not isinstance(n["data"], dict):
+            n["data"] = {}
+
+        data = n["data"]
+
+        # Infer nodeType from the node ID if missing or invalid
+        node_type = data.get("nodeType", "")
+        if node_type not in VALID_NODE_TYPES:
+            # Try to extract from the ID: "upload_csv_1" -> "upload_csv"
+            nid = n.get("id", "")
+            parts = nid.rsplit("_", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                candidate = parts[0]
+            else:
+                candidate = nid
+            # Check progressively shorter prefixes
+            inferred = None
+            for vt in sorted(VALID_NODE_TYPES, key=len, reverse=True):
+                if candidate.startswith(vt):
+                    inferred = vt
+                    break
+            data["nodeType"] = inferred or "upload_csv"
+
+        # Ensure required data fields exist
+        if "label" not in data or not data["label"]:
+            data["label"] = data.get("nodeType", "Node")
+        if "status" not in data:
+            data["status"] = "idle"
+        if "backendNodeId" not in data:
+            data["backendNodeId"] = None
+
+        # If config is missing, try to build it from flat data keys
+        if "config" not in data or not isinstance(data.get("config"), dict):
+            node_doc = get_node_by_id(data["nodeType"])
+            config = {}
+            if node_doc:
+                for key in node_doc["config_schema"]:
+                    if key in data:
+                        config[key] = data.pop(key)
+            data["config"] = config
+
+        # Ensure position exists
+        if "position" not in n or not isinstance(n.get("position"), dict):
+            n["position"] = {"x": 100, "y": 200}
+
         # Deduplicate IDs
-        seen = set()
-        for n in nodes:
-            nid = n.get("id", "node")
-            if nid in seen:
-                n["id"] = f"{nid}_{len(seen)}"
-            seen.add(n["id"])
-        return {"nodes": nodes, "edges": workflow.get("edges", [])}
+        nid = n.get("id", "node")
+        if nid in seen_ids:
+            nid = f"{nid}_{len(seen_ids)}"
+            n["id"] = nid
+        seen_ids.add(nid)
 
-    return workflow
+    return {"nodes": nodes, "edges": edges}
 
 
 # ── Main orchestrator ─────────────────────────────────────────────────────────
@@ -305,12 +359,7 @@ async def generate_workflow_agentic(
     if feasibility in ("full", "partial") and feasible_steps:
         try:
             raw_workflow = await step_generate(feasible_steps, file_schemas, relevant_nodes)
-            workflow = await step_validate_and_fix(raw_workflow, attempt=0)
-
-            # Validate again
-            is_valid, errors = _validate_workflow(workflow)
-            if not is_valid:
-                workflow = await step_validate_and_fix(workflow, attempt=1)
+            workflow = await step_validate_and_fix(raw_workflow)
         except Exception as e:
             reasoning += f" [Workflow generation failed: {e}]"
 
@@ -362,8 +411,5 @@ Edge: {{"id": "e<src>-<tgt>", "source": "<src>", "target": "<tgt>", "type": "smo
 
     raw = await _llm(prompt)
     wf = _extract_json(raw)
-    validated = await step_validate_and_fix(wf, attempt=0)
-    is_valid, _ = _validate_workflow(validated)
-    if not is_valid:
-        validated = await step_validate_and_fix(validated, attempt=1)
+    validated = await step_validate_and_fix(wf)
     return {"workflow": validated}
