@@ -689,3 +689,344 @@ class DataframeController:
             pl.col(column).cast(pl.Float64).cum_prod().alias(target)
         )
         return self.save_node_result(lf, new_id)
+
+    # ── ENHANCED REGRESSION ──────────────────────────────────────────────────
+
+    @safe_node_execution
+    def ols_regression(self, node_id: str, target: str, features: List[str]) -> str:
+        """Full OLS regression with coefficients, t-stats, p-values, R², F-stat.
+        Output: tidy dataframe with one row per feature + intercept."""
+        from scipy import stats as sp_stats
+
+        new_id = f"ols_{node_id}"
+        df = self.get_node_data(node_id).collect()
+        y = df[target].to_numpy().astype(float)
+        X = df.select(features).to_numpy().astype(float)
+        n, k = X.shape
+
+        X_int = np.column_stack([np.ones(n), X])
+        coeffs, residuals, _, _ = np.linalg.lstsq(X_int, y, rcond=None)
+
+        y_hat = X_int @ coeffs
+        ss_res = np.sum((y - y_hat) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+        r_squared = 1 - ss_res / ss_tot if ss_tot > 0 else 0
+        adj_r_squared = 1 - (1 - r_squared) * (n - 1) / (n - k - 1) if n > k + 1 else 0
+
+        mse = ss_res / (n - k - 1) if n > k + 1 else 0
+        se = np.sqrt(np.diag(mse * np.linalg.pinv(X_int.T @ X_int))) if mse > 0 else np.zeros(k + 1)
+        t_stats = coeffs / se if np.all(se > 0) else np.zeros(k + 1)
+        p_values = [2 * (1 - sp_stats.t.cdf(abs(t), df=n - k - 1)) for t in t_stats] if n > k + 1 else [1.0] * (k + 1)
+
+        ss_reg = ss_tot - ss_res
+        f_stat = (ss_reg / k) / mse if k > 0 and mse > 0 else 0
+        f_p_value = 1 - sp_stats.f.cdf(f_stat, k, n - k - 1) if n > k + 1 else 1.0
+
+        names = ["intercept"] + features
+        result = pl.DataFrame({
+            "feature": names,
+            "coefficient": coeffs.tolist(),
+            "std_error": se.tolist(),
+            "t_statistic": t_stats.tolist(),
+            "p_value": p_values,
+            "significant_5pct": [p < 0.05 for p in p_values],
+        })
+        # Add model summary as extra columns on the first row
+        summary_cols = {
+            "r_squared": [r_squared] + [None] * k,
+            "adj_r_squared": [adj_r_squared] + [None] * k,
+            "f_statistic": [f_stat] + [None] * k,
+            "f_p_value": [f_p_value] + [None] * k,
+            "n_observations": [n] + [None] * k,
+            "n_features": [k] + [None] * k,
+        }
+        for col_name, values in summary_cols.items():
+            result = result.with_columns(pl.Series(name=col_name, values=values))
+
+        return self.save_node_result(result.lazy(), new_id)
+
+    # ── STATISTICAL TESTS ────────────────────────────────────────────────────
+
+    @safe_node_execution
+    def t_test(self, node_id: str, column_a: str, column_b: str = None,
+               test_type: str = "two_sample", alternative: str = "two-sided",
+               popmean: float = 0) -> str:
+        """Student's t-test. Supports one-sample, two-sample (independent), paired.
+        Output: tidy dataframe with test results."""
+        from scipy import stats as sp_stats
+
+        new_id = f"ttest_{node_id}"
+        df = self.get_node_data(node_id).collect()
+        a = df[column_a].drop_nulls().to_numpy().astype(float)
+
+        if test_type == "one_sample":
+            stat, pval = sp_stats.ttest_1samp(a, popmean)
+            desc = f"One-sample t-test: {column_a} vs μ={popmean}"
+            df_degrees = len(a) - 1
+        elif test_type == "paired":
+            if not column_b:
+                raise ValueError("column_b required for paired t-test")
+            b = df[column_b].drop_nulls().to_numpy().astype(float)
+            stat, pval = sp_stats.ttest_rel(a, b)
+            desc = f"Paired t-test: {column_a} vs {column_b}"
+            df_degrees = min(len(a), len(b)) - 1
+        else:
+            if not column_b:
+                raise ValueError("column_b required for two-sample t-test")
+            b = df[column_b].drop_nulls().to_numpy().astype(float)
+            stat, pval = sp_stats.ttest_ind(a, b, equal_var=False)
+            desc = f"Welch's t-test: {column_a} vs {column_b}"
+            df_degrees = min(len(a), len(b)) - 1
+
+        result = pl.DataFrame({
+            "test": [desc],
+            "t_statistic": [float(stat)],
+            "p_value": [float(pval)],
+            "degrees_of_freedom": [df_degrees],
+            "significant_5pct": [pval < 0.05],
+            "significant_1pct": [pval < 0.01],
+            "mean_a": [float(np.mean(a))],
+            "std_a": [float(np.std(a, ddof=1))],
+            "n_a": [len(a)],
+        })
+        if column_b and test_type != "one_sample":
+            b_arr = df[column_b].drop_nulls().to_numpy().astype(float)
+            result = result.with_columns([
+                pl.lit(float(np.mean(b_arr))).alias("mean_b"),
+                pl.lit(float(np.std(b_arr, ddof=1))).alias("std_b"),
+                pl.lit(len(b_arr)).alias("n_b"),
+            ])
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def f_test(self, node_id: str, column_a: str, column_b: str) -> str:
+        """F-test for equality of variances between two columns."""
+        from scipy import stats as sp_stats
+
+        new_id = f"ftest_{node_id}"
+        df = self.get_node_data(node_id).collect()
+        a = df[column_a].drop_nulls().to_numpy().astype(float)
+        b = df[column_b].drop_nulls().to_numpy().astype(float)
+
+        var_a, var_b = np.var(a, ddof=1), np.var(b, ddof=1)
+        f_stat = var_a / var_b if var_b > 0 else float('inf')
+        df1, df2 = len(a) - 1, len(b) - 1
+        pval = 2 * min(sp_stats.f.cdf(f_stat, df1, df2), 1 - sp_stats.f.cdf(f_stat, df1, df2))
+
+        result = pl.DataFrame({
+            "test": [f"F-test: {column_a} vs {column_b}"],
+            "f_statistic": [float(f_stat)],
+            "p_value": [float(pval)],
+            "df1": [df1], "df2": [df2],
+            "variance_a": [float(var_a)], "variance_b": [float(var_b)],
+            "significant_5pct": [pval < 0.05],
+            "conclusion": ["Variances are significantly different" if pval < 0.05 else "No significant difference in variances"],
+        })
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def chi_square_test(self, node_id: str, column_a: str, column_b: str) -> str:
+        """Chi-square test of independence between two categorical columns."""
+        from scipy import stats as sp_stats
+
+        new_id = f"chi2_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        ct = df.group_by([column_a, column_b]).len().rename({"len": "count"})
+        pivot_df = ct.pivot(values="count", index=column_a, on=column_b, aggregate_function="sum").fill_null(0)
+        data_cols = [c for c in pivot_df.columns if c != column_a]
+        contingency = pivot_df.select(data_cols).to_numpy()
+
+        chi2, pval, dof, expected = sp_stats.chi2_contingency(contingency)
+
+        result = pl.DataFrame({
+            "test": [f"Chi-square: {column_a} vs {column_b}"],
+            "chi2_statistic": [float(chi2)],
+            "p_value": [float(pval)],
+            "degrees_of_freedom": [int(dof)],
+            "significant_5pct": [pval < 0.05],
+            "n_categories_a": [len(pivot_df)],
+            "n_categories_b": [len(data_cols)],
+            "conclusion": ["Variables are dependent" if pval < 0.05 else "Variables are independent"],
+        })
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def dw_test(self, node_id: str, residuals_col: str) -> str:
+        """Durbin-Watson test for autocorrelation in residuals."""
+        new_id = f"dw_{node_id}"
+        df = self.get_node_data(node_id).collect()
+        residuals = df[residuals_col].drop_nulls().to_numpy().astype(float)
+
+        diff = np.diff(residuals)
+        dw_stat = np.sum(diff ** 2) / np.sum(residuals ** 2) if np.sum(residuals ** 2) > 0 else 0
+
+        if dw_stat < 1.5:
+            conclusion = "Positive autocorrelation detected"
+        elif dw_stat > 2.5:
+            conclusion = "Negative autocorrelation detected"
+        else:
+            conclusion = "No significant autocorrelation"
+
+        result = pl.DataFrame({
+            "test": ["Durbin-Watson"],
+            "dw_statistic": [float(dw_stat)],
+            "n_observations": [len(residuals)],
+            "conclusion": [conclusion],
+            "interpretation": [f"DW={dw_stat:.4f}. Range [0,4]. ~2 = no autocorrelation, <1.5 = positive, >2.5 = negative"],
+        })
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def anova_test(self, node_id: str, value_col: str, group_col: str) -> str:
+        """One-way ANOVA: tests if means differ across groups."""
+        from scipy import stats as sp_stats
+
+        new_id = f"anova_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        groups = []
+        for group_name in df[group_col].unique().to_list():
+            group_data = df.filter(pl.col(group_col) == group_name)[value_col].drop_nulls().to_numpy().astype(float)
+            if len(group_data) > 0:
+                groups.append(group_data)
+
+        if len(groups) < 2:
+            raise ValueError("ANOVA requires at least 2 groups")
+
+        f_stat, pval = sp_stats.f_oneway(*groups)
+
+        group_stats = []
+        for group_name in df[group_col].unique().sort().to_list():
+            gd = df.filter(pl.col(group_col) == group_name)[value_col].drop_nulls().to_numpy().astype(float)
+            group_stats.append({
+                "group": str(group_name), "n": len(gd),
+                "mean": float(np.mean(gd)), "std": float(np.std(gd, ddof=1)) if len(gd) > 1 else 0,
+            })
+
+        summary = pl.DataFrame({
+            "test": ["One-way ANOVA"],
+            "f_statistic": [float(f_stat)],
+            "p_value": [float(pval)],
+            "n_groups": [len(groups)],
+            "significant_5pct": [pval < 0.05],
+            "conclusion": ["Means differ significantly" if pval < 0.05 else "No significant difference in means"],
+        })
+        group_df = pl.DataFrame(group_stats)
+        # Combine: summary on top, then group details
+        result = pl.concat([
+            summary.with_columns([pl.lit(None).alias("group"), pl.lit(None).cast(pl.Int64).alias("n"),
+                                  pl.lit(None).cast(pl.Float64).alias("mean"), pl.lit(None).cast(pl.Float64).alias("std")]),
+            group_df.with_columns([pl.lit("").alias("test"), pl.lit(None).cast(pl.Float64).alias("f_statistic"),
+                                   pl.lit(None).cast(pl.Float64).alias("p_value"), pl.lit(None).cast(pl.Int64).alias("n_groups"),
+                                   pl.lit(None).cast(pl.Boolean).alias("significant_5pct"), pl.lit("").alias("conclusion")]),
+        ], how="diagonal_relaxed")
+        return self.save_node_result(result.lazy(), new_id)
+
+    # ── VISUALIZATION NODES ──────────────────────────────────────────────────
+
+    @safe_node_execution
+    def chart_node(self, node_id: str, chart_type: str, x_col: str = None, y_col: str = None,
+                   color_col: str = None, title: str = "", bins: int = 20,
+                   agg: str = "sum") -> str:
+        """Generate a chart and store as base64 PNG in metadata. Also passes data through.
+        chart_type: bar, line, scatter, histogram, heatmap, pie
+        """
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        import base64
+
+        new_id = f"chart_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        if chart_type == "bar":
+            if not x_col or not y_col:
+                raise ValueError("bar chart requires x_col and y_col")
+            plot_df = df.group_by(x_col).agg(pl.col(y_col).sum()).sort(x_col)
+            ax.bar(plot_df[x_col].to_list(), plot_df[y_col].to_list(), color='#06b6d4')
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+
+        elif chart_type == "line":
+            if not x_col or not y_col:
+                raise ValueError("line chart requires x_col and y_col")
+            sorted_df = df.sort(x_col)
+            ax.plot(sorted_df[x_col].to_list(), sorted_df[y_col].to_list(), marker='o', color='#8b5cf6')
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+
+        elif chart_type == "scatter":
+            if not x_col or not y_col:
+                raise ValueError("scatter chart requires x_col and y_col")
+            ax.scatter(df[x_col].to_numpy(), df[y_col].to_numpy(), alpha=0.6, color='#ec4899')
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+
+        elif chart_type == "histogram":
+            if not x_col:
+                raise ValueError("histogram requires x_col")
+            data = df[x_col].drop_nulls().to_numpy().astype(float)
+            ax.hist(data, bins=bins, color='#06b6d4', edgecolor='white', alpha=0.8)
+            ax.set_xlabel(x_col)
+            ax.set_ylabel("Frequency")
+
+        elif chart_type == "heatmap":
+            numeric_cols = [c for c in df.columns if df[c].dtype in (pl.Float64, pl.Float32, pl.Int64, pl.Int32)]
+            if len(numeric_cols) < 2:
+                raise ValueError("heatmap requires at least 2 numeric columns")
+            corr_data = []
+            for c1 in numeric_cols:
+                row = []
+                for c2 in numeric_cols:
+                    row.append(float(df.select(pl.corr(c1, c2)).item()))
+                corr_data.append(row)
+            im = ax.imshow(corr_data, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
+            ax.set_xticks(range(len(numeric_cols)))
+            ax.set_yticks(range(len(numeric_cols)))
+            ax.set_xticklabels(numeric_cols, rotation=45, ha='right', fontsize=8)
+            ax.set_yticklabels(numeric_cols, fontsize=8)
+            for i in range(len(numeric_cols)):
+                for j in range(len(numeric_cols)):
+                    ax.text(j, i, f"{corr_data[i][j]:.2f}", ha='center', va='center', fontsize=7)
+            fig.colorbar(im, ax=ax, shrink=0.8)
+
+        elif chart_type == "pie":
+            if not x_col or not y_col:
+                raise ValueError("pie chart requires x_col (labels) and y_col (values)")
+            plot_df = df.group_by(x_col).agg(pl.col(y_col).sum()).sort(y_col, descending=True)
+            labels = plot_df[x_col].to_list()
+            values = plot_df[y_col].to_list()
+            ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90)
+
+        else:
+            raise ValueError(f"Unknown chart_type: {chart_type}")
+
+        if title:
+            ax.set_title(title, fontsize=14, fontweight='bold')
+        fig.tight_layout()
+
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=150, bbox_inches='tight')
+        plt.close(fig)
+        buf.seek(0)
+        chart_b64 = base64.b64encode(buf.read()).decode('utf-8')
+
+        # Store chart as metadata and pass data through
+        result_id = self.save_node_result(df.lazy(), new_id)
+
+        # Store chart image in Redis
+        chart_key = f"versor:chart:{new_id}"
+        self.r.set(chart_key, chart_b64, ex=7200)
+
+        return result_id
+
+    def get_chart_image(self, node_id: str) -> str:
+        """Retrieve base64 chart image from Redis."""
+        chart_key = f"versor:chart:{node_id}"
+        data = self.r.get(chart_key)
+        if data is None:
+            return None
+        return data if isinstance(data, str) else data.decode('utf-8')

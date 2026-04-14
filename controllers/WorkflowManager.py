@@ -94,6 +94,8 @@ class WorkflowManager:
         'correlation_matrix_1d',
         # New nodes
         'add_literal_column', 'range_bucket', 'date_offset', 'crosstab', 'cumulative_product',
+        # Enhanced regression + stats + charts
+        'ols_regression', 't_test', 'f_test', 'chi_square_test', 'dw_test', 'anova_test', 'chart_node',
     }
 
     # ── Param whitelist (prevents mass-assignment) ────────────────────────────
@@ -158,6 +160,14 @@ class WorkflowManager:
         'date_offset':                    {'column', 'offset', 'unit', 'new_col'},
         'crosstab':                       {'index', 'columns', 'values', 'agg'},
         'cumulative_product':             {'column', 'new_col'},
+        # Enhanced regression + stats + charts
+        'ols_regression':                 {'target', 'features'},
+        't_test':                         {'column_a', 'column_b', 'test_type', 'alternative', 'popmean'},
+        'f_test':                         {'column_a', 'column_b'},
+        'chi_square_test':                {'column_a', 'column_b'},
+        'dw_test':                        {'residuals_col'},
+        'anova_test':                     {'value_col', 'group_col'},
+        'chart_node':                     {'chart_type', 'x_col', 'y_col', 'color_col', 'title', 'bins', 'agg'},
     }
 
     def _execute_controller_method(self, node_type: str, params: Dict[str, Any], parent_id: str):

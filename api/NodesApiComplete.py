@@ -814,6 +814,123 @@ async def cumulative_product_node(
 
 # --- 13. MACHINE LEARNING ---
 
+@app.post("/nodes/ml/ols_regression")
+async def ols_regression_node(
+    parent_id: str = Query(...),
+    target: str = Body(...),
+    features: List[str] = Body(...),
+):
+    """Full OLS regression with R², p-values, t-stats, coefficients."""
+    try:
+        res_id = workflow.create_node("ols_regression", {"target": target, "features": features}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- 14. STATISTICAL TESTS ---
+
+@app.post("/nodes/stats/t_test")
+async def t_test_node(
+    parent_id: str = Query(...),
+    column_a: str = Body(...),
+    column_b: Optional[str] = Body(None),
+    test_type: str = Body("two_sample"),
+    alternative: str = Body("two-sided"),
+    popmean: float = Body(0),
+):
+    try:
+        params = {"column_a": column_a, "test_type": test_type, "alternative": alternative, "popmean": popmean}
+        if column_b:
+            params["column_b"] = column_b
+        res_id = workflow.create_node("t_test", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/stats/f_test")
+async def f_test_node(
+    parent_id: str = Query(...),
+    column_a: str = Body(...),
+    column_b: str = Body(...),
+):
+    try:
+        res_id = workflow.create_node("f_test", {"column_a": column_a, "column_b": column_b}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/stats/chi_square")
+async def chi_square_node(
+    parent_id: str = Query(...),
+    column_a: str = Body(...),
+    column_b: str = Body(...),
+):
+    try:
+        res_id = workflow.create_node("chi_square_test", {"column_a": column_a, "column_b": column_b}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/stats/dw_test")
+async def dw_test_node(
+    parent_id: str = Query(...),
+    residuals_col: str = Body(...),
+):
+    try:
+        res_id = workflow.create_node("dw_test", {"residuals_col": residuals_col}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/stats/anova")
+async def anova_node(
+    parent_id: str = Query(...),
+    value_col: str = Body(...),
+    group_col: str = Body(...),
+):
+    try:
+        res_id = workflow.create_node("anova_test", {"value_col": value_col, "group_col": group_col}, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# --- 15. VISUALIZATION ---
+
+@app.post("/nodes/viz/chart")
+async def chart_endpoint(
+    parent_id: str = Query(...),
+    chart_type: str = Body(...),
+    x_col: Optional[str] = Body(None),
+    y_col: Optional[str] = Body(None),
+    color_col: Optional[str] = Body(None),
+    title: str = Body(""),
+    bins: int = Body(20),
+    agg: str = Body("sum"),
+):
+    try:
+        params = {"chart_type": chart_type, "title": title, "bins": bins, "agg": agg}
+        if x_col: params["x_col"] = x_col
+        if y_col: params["y_col"] = y_col
+        if color_col: params["color_col"] = color_col
+        res_id = workflow.create_node("chart_node", params, parent_id)
+        metadata = engine.get_node_metadata(res_id)
+        chart_img = engine.get_chart_image(res_id)
+        if chart_img:
+            metadata["chart_image"] = chart_img
+        return {"node_id": res_id, "metadata": metadata}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/nodes/{node_id}/chart")
+async def get_chart_image(node_id: str):
+    """Get the chart image for a visualization node."""
+    img = engine.get_chart_image(node_id)
+    if not img:
+        raise HTTPException(404, "No chart found for this node")
+    return {"chart_image": img}
+
+# --- 16. ORIGINAL MACHINE LEARNING (kept for backwards compat) ---
+
 @app.post("/nodes/ml/linear_regression")
 async def linear_regression_node(
     parent_id: str = Query(..., description="Parent node ID"),
