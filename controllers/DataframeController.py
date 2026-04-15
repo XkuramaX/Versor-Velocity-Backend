@@ -509,34 +509,33 @@ class DataframeController:
     @safe_node_execution
     def conditional_column(self, node_id: str, column: str, op: str, threshold: Any,
                            then_val: Any, else_val: Any, new_col: str) -> str:
-        """Create conditional column using safe expression building — no eval()."""
+        """Create conditional column using safe expression building — no eval().
+        threshold, then_val, else_val can be column names or literal values."""
         new_id = f"if_{node_id}"
 
-        # Whitelist of allowed comparison operators
         SAFE_OPS = {'gt': '>', 'gte': '>=', 'lt': '<', 'lte': '<=', 'eq': '==', 'ne': '!='}
         if op not in SAFE_OPS:
             raise ValueError(f"Invalid operator '{op}'. Allowed: {list(SAFE_OPS.keys())}")
 
-        # Build condition expression safely without eval()
+        schema = self.get_node_data(node_id).collect_schema()
         col_expr = pl.col(column)
-        try:
-            num = float(threshold)
-            cond_map = {
-                'gt':  col_expr > num,  'gte': col_expr >= num,
-                'lt':  col_expr < num,  'lte': col_expr <= num,
-                'eq':  col_expr == num, 'ne':  col_expr != num,
-            }
-        except (ValueError, TypeError):
-            # String comparison
-            cond_map = {
-                'gt':  col_expr > str(threshold),  'gte': col_expr >= str(threshold),
-                'lt':  col_expr < str(threshold),  'lte': col_expr <= str(threshold),
-                'eq':  col_expr == str(threshold), 'ne':  col_expr != str(threshold),
-            }
+
+        # Resolve threshold — column reference or literal
+        if isinstance(threshold, str) and threshold in schema:
+            rhs = pl.col(threshold)
+        else:
+            try:
+                rhs = float(threshold)
+            except (ValueError, TypeError):
+                rhs = str(threshold)
+
+        cond_map = {
+            'gt':  col_expr > rhs,  'gte': col_expr >= rhs,
+            'lt':  col_expr < rhs,  'lte': col_expr <= rhs,
+            'eq':  col_expr == rhs, 'ne':  col_expr != rhs,
+        }
         condition = cond_map[op]
 
-        # Resolve then/else — column reference or literal
-        schema = self.get_node_data(node_id).collect_schema()
         def resolve(val):
             if isinstance(val, str) and val in schema:
                 return pl.col(val)

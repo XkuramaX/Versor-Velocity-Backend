@@ -5,34 +5,55 @@ class SafeFilterBuilder:
     """Build safe Polars filter expressions without using eval()"""
     
     NUMERIC_OPS = {
-        'gt': lambda col, val: pl.col(col) > val,
-        'gte': lambda col, val: pl.col(col) >= val,
-        'lt': lambda col, val: pl.col(col) < val,
-        'lte': lambda col, val: pl.col(col) <= val,
-        'eq': lambda col, val: pl.col(col) == val,
-        'ne': lambda col, val: pl.col(col) != val,
-        'between': lambda col, val: (pl.col(col) >= val[0]) & (pl.col(col) <= val[1]),
-        'in': lambda col, val: pl.col(col).is_in(val)
+        'gt': lambda l, r: l > r,
+        'gte': lambda l, r: l >= r,
+        'lt': lambda l, r: l < r,
+        'lte': lambda l, r: l <= r,
+        'eq': lambda l, r: l == r,
+        'ne': lambda l, r: l != r,
+        'between': lambda l, r: (l >= r[0]) & (l <= r[1]),
+        'in': lambda l, r: l.is_in(r)
     }
     
     STRING_OPS = {
-        'eq': lambda col, val: pl.col(col) == val,
-        'ne': lambda col, val: pl.col(col) != val,
-        'contains': lambda col, val: pl.col(col).str.contains(val),
-        'starts_with': lambda col, val: pl.col(col).str.starts_with(val),
-        'ends_with': lambda col, val: pl.col(col).str.ends_with(val),
-        'in': lambda col, val: pl.col(col).is_in(val)
+        'eq': lambda l, r: l == r,
+        'ne': lambda l, r: l != r,
+        'contains': lambda l, r: l.str.contains(r if isinstance(r, str) else r),
+        'starts_with': lambda l, r: l.str.starts_with(r if isinstance(r, str) else r),
+        'ends_with': lambda l, r: l.str.ends_with(r if isinstance(r, str) else r),
+        'in': lambda l, r: l.is_in(r)
     }
     
     @staticmethod
-    def build_filter(column: str, operation: str, value: Any, column_type: str = 'numeric'):
-        """Build a safe filter expression"""
+    def _resolve_value(value: Any, value_type: str = None, available_columns: list = None):
+        """Resolve a value — if it matches a column name, return pl.col(); otherwise literal."""
+        if available_columns and isinstance(value, str) and value in available_columns:
+            return pl.col(value)
+        if value_type == 'numeric':
+            try:
+                return float(value)
+            except (ValueError, TypeError):
+                return value
+        return value
+
+    @staticmethod
+    def build_filter(column: str, operation: str, value: Any, column_type: str = 'numeric',
+                     compare_column: str = None, available_columns: list = None):
+        """Build a safe filter expression.
+        If compare_column is set, compare against that column instead of a literal value."""
         ops = SafeFilterBuilder.NUMERIC_OPS if column_type == 'numeric' else SafeFilterBuilder.STRING_OPS
         
         if operation not in ops:
             raise ValueError(f"Invalid operation '{operation}' for {column_type} type")
         
-        return ops[operation](column, value)
+        left = pl.col(column)
+        
+        if compare_column:
+            right = pl.col(compare_column)
+        else:
+            right = value
+        
+        return ops[operation](left, right)
     
     @staticmethod
     def build_multi_filter(filters: List[dict], logic: str = 'and'):
@@ -40,15 +61,17 @@ class SafeFilterBuilder:
         if not filters:
             raise ValueError("At least one filter required")
         
-        expressions = [
-            SafeFilterBuilder.build_filter(
-                f['column'], 
-                f['operation'], 
-                f['value'], 
-                f.get('column_type', 'numeric')
+        expressions = []
+        for f in filters:
+            expressions.append(
+                SafeFilterBuilder.build_filter(
+                    f['column'], 
+                    f['operation'], 
+                    f['value'], 
+                    f.get('column_type', 'numeric'),
+                    compare_column=f.get('compare_column'),
+                )
             )
-            for f in filters
-        ]
         
         if logic == 'and':
             result = expressions[0]
