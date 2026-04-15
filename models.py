@@ -95,3 +95,34 @@ class FeatureTicket(Base):
     missing_capability = Column(Text, default="")       # exact operation/algorithm missing
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class WorkflowSchedule(Base):
+    """Cron schedule for automatic workflow execution."""
+    __tablename__ = "workflow_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(String(100), ForeignKey("workflows.id"), unique=True)
+    cron_expression = Column(String(100), nullable=False)  # e.g. "0 9 * * 1-5" (9am weekdays)
+    enabled = Column(Integer, default=1)                    # 1=enabled, 0=disabled
+    timezone = Column(String(50), default="UTC")
+    created_by = Column(String(100))
+    last_run_at = Column(DateTime, nullable=True)
+    next_run_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ScheduleRunLog(Base):
+    """Log of each scheduled/triggered workflow run."""
+    __tablename__ = "schedule_run_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(String(100), ForeignKey("workflows.id"))
+    trigger_type = Column(String(20))       # "cron", "webhook", "manual"
+    started_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    status = Column(String(20), default="running")  # running, success, error
+    error_message = Column(Text, nullable=True)
+    node_results = Column(Text, default="[]")       # JSON: [{node_id, backend_id, status}]
+    triggered_by = Column(String(100), default="scheduler")

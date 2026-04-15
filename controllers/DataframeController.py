@@ -397,18 +397,18 @@ class DataframeController:
 
     @safe_node_execution
     def linear_regression_node(self, node_id: str, target: str, features: List[str]) -> str:
-        """Fit OLS, append predicted_{target} column to the original dataframe.
-        Coefficients are stored as extra columns (intercept + one per feature)
-        so the full DF flows through and downstream nodes can use predictions."""
+        """Fit OLS, append predicted_{target} column to the original dataframe."""
         df = self.get_node_data(node_id).collect()
-        y = df[target].to_numpy().astype(float)
-        X = df.select(features).to_numpy().astype(float)
+        # Drop rows with nulls in target or features
+        clean_df = df.drop_nulls(subset=[target] + features)
+        y = clean_df[target].to_numpy().astype(float)
+        X = clean_df.select(features).to_numpy().astype(float)
 
         X_int = np.column_stack([np.ones(X.shape[0]), X])
         coeffs, _, _, _ = np.linalg.lstsq(X_int, y, rcond=None)
 
         predicted = X_int @ coeffs
-        result_df = df.with_columns(pl.Series(name=f"predicted_{target}", values=predicted.tolist()))
+        result_df = clean_df.with_columns(pl.Series(name=f"predicted_{target}", values=predicted.tolist()))
 
         new_id = f"lr_model_{node_id}"
         return self.save_node_result(result_df.lazy(), new_id)
@@ -425,7 +425,8 @@ class DataframeController:
             for j, b in enumerate(columns):
                 if j <= i:
                     continue  # upper triangle only to avoid duplicates
-                corr_val = float(df.select(pl.corr(a, b)).item())
+                raw_val = df.select(pl.corr(a, b)).item()
+                corr_val = float(raw_val) if raw_val is not None else 0.0
                 rows.append({"col_a": a, "col_b": b, "correlation": corr_val})
         if rows:
             result_df = pl.DataFrame(rows)
@@ -700,6 +701,8 @@ class DataframeController:
 
         new_id = f"ols_{node_id}"
         df = self.get_node_data(node_id).collect()
+        # Drop rows with nulls in target or features
+        df = df.drop_nulls(subset=[target] + features)
         y = df[target].to_numpy().astype(float)
         X = df.select(features).to_numpy().astype(float)
         n, k = X.shape
@@ -981,7 +984,8 @@ class DataframeController:
             for c1 in numeric_cols:
                 row = []
                 for c2 in numeric_cols:
-                    row.append(float(df.select(pl.corr(c1, c2)).item()))
+                    val = df.select(pl.corr(c1, c2)).item()
+                    row.append(float(val) if val is not None else 0.0)
                 corr_data.append(row)
             im = ax.imshow(corr_data, cmap='RdBu_r', vmin=-1, vmax=1, aspect='auto')
             ax.set_xticks(range(len(numeric_cols)))

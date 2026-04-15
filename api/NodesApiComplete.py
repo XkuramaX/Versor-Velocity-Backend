@@ -9,6 +9,7 @@ from database import get_db, create_tables
 from models import Workflow, WorkflowPermission, WorkflowFile, WorkflowVersion, WorkflowRun, PermissionLevel
 from middleware.security import InputValidationMiddleware, RateLimitMiddleware
 from api.ai_workflow import router as ai_router
+from scheduler.api import router as scheduler_router
 import os
 import shutil
 from datetime import datetime
@@ -30,6 +31,7 @@ app.add_middleware(InputValidationMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=100)
 
 app.include_router(ai_router)
+app.include_router(scheduler_router)
 
 async def cleanup_task():
     while True:
@@ -41,6 +43,9 @@ async def startup_event():
     create_tables()
     engine.cleanup_old_files(max_age_hours=24)
     asyncio.create_task(cleanup_task())
+    # Start the cron scheduler background task
+    from scheduler.cron_service import scheduler_loop
+    asyncio.create_task(scheduler_loop())
 
 engine = DataframeController()
 workflow = WorkflowManager(engine)
