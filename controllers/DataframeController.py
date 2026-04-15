@@ -1027,6 +1027,184 @@ class DataframeController:
 
         return result_id
 
+    # ── ROLL-RATE ANALYSIS NODES ────────────────────────────────────────────
+
+    @safe_node_execution
+    def monthly_snapshot(self, node_id: str, id_col: str, date_col: str, value_col: str,
+                         agg: str = "max") -> str:
+        """One row per (id, year-month). Adds 'year_month' column.
+        agg: 'max' (worst value) or 'last' (last observed by date)."""
+        new_id = f"msnap_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        # Parse date and derive year_month string
+        df = df.with_columns([
+            pl.col(date_col).cast(pl.Date).alias("_date"),
+        ]).with_columns([
+            pl.col("_date").dt.strftime("%Y-%m").alias("year_month"),
+        ])
+
+        if agg == "last":
+            df = df.sort([id_col, "_date"])
+            result = df.group_by([id_col, "year_month"]).last()
+        else:  # max
+            result = df.group_by([id_col, "year_month"]).agg([
+                pl.col(value_col).max().alias(value_col),
+            ])
+
+        result = result.drop("_date") if "_date" in result.columns else result
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def transition_matrix(self, node_id: str, id_col: str, period_col: str,
+                          bucket_col: str, bucket_order: list = None) -> str:
+        """Compute month-over-month transition counts and proportions.
+        Self-joins consecutive periods. Output: tidy table with
+        columns: period_from, period_to, from_bucket, to_bucket, count, proportion."""
+        new_id = f"trans_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        if bucket_order is None:
+            bucket_order = ["0", "1-30", "31-60", "61-90", "90+"]
+
+        periods = sorted(df[period_col].unique().to_list())
+        all_rows = []
+
+        for i in range(len(periods) - 1):
+            p0, p1 = periods[i], periods[i + 1]
+            left = df.filter(pl.col(period_col) == p0).select([id_col, pl.col(bucket_col).alias("from_bucket")])
+            right = df.filter(pl.col(period_col) == p1).select([id_col, pl.col(bucket_col).alias("to_bucket")])
+            joined = left.join(right, on=id_col, how="inner")
+            if joined.height == 0:
+                continue
+
+            # Count transitions
+            counts = joined.group_by(["from_bucket", "to_bucket"]).len().rename({"len": "count"})
+
+            # Compute proportions per from_bucket
+            totals = counts.group_by("from_bucket").agg(pl.col("count").sum().alias("total"))
+            counts = counts.join(totals, on="from_bucket", how="left")
+            counts = counts.with_columns(
+                (pl.col("count") / pl.col("total")).alias("proportion")
+            ).drop("total")
+
+            counts = counts.with_columns([
+                pl.lit(str(p0)).alias("period_from"),
+                pl.lit(str(p1)).alias("period_to"),
+            ])
+            all_rows.append(counts)
+
+        if all_rows:
+            result = pl.concat(all_rows)
+            result = result.select(["period_from", "period_to", "from_bucket", "to_bucket", "count", "proportion"])
+        else:
+            result = pl.DataFrame({
+                "period_from": [], "period_to": [], "from_bucket": [],
+                "to_bucket": [], "count": pl.Series([], dtype=pl.UInt32),
+                "proportion": pl.Series([], dtype=pl.Float64),
+            })
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def period_average_matrix(self, node_id: str, window: int = 12,
+                              bucket_order: list = None) -> str:
+        """Average transition proportions over rolling windows of `window` consecutive
+        period-pairs. Input must be output of transition_matrix node.
+        Output: performance_period, from_bucket, to_bucket, avg_proportion."""
+        new_id = f"pavg_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        if bucket_order is None:
+            bucket_order = ["0", "1-30", "31-60", "61-90", "90+"]
+
+        # Get unique period pairs in order
+        pairs = (
+            df.select(["period_from", "period_to"])
+            .unique()
+            .sort("period_from")
+            .to_dicts()
+        )
+
+        n_full = len(pairs) // window
+        blocks = []
+
+        for idx in range(n_full):
+            start = idx * window
+            end = start + window
+            chunk_pairs = pairs[start:end]
+            froms = [p["period_from"] for p in chunk_pairs]
+            label = f"Year_{idx + 1}"
+
+            sub = df.filter(pl.col("period_from").is_in(froms))
+            avg = (
+                sub.group_by(["from_bucket", "to_bucket"])
+                .agg(pl.col("proportion").mean().alias("avg_proportion"))
+                .with_columns(pl.lit(label).alias("performance_period"))
+            )
+            blocks.append(avg)
+
+        if blocks:
+            result = pl.concat(blocks).select(["performance_period", "from_bucket", "to_bucket", "avg_proportion"])
+        else:
+            result = pl.DataFrame({
+                "performance_period": [], "from_bucket": [], "to_bucket": [],
+                "avg_proportion": pl.Series([], dtype=pl.Float64),
+            })
+        return self.save_node_result(result.lazy(), new_id)
+
+    @safe_node_execution
+    def chain_probability(self, node_id: str, bucket_order: list = None) -> str:
+        """From averaged transition matrix, compute prob_default (chain product
+        of adjacent worsening steps to worst bucket) and prob_cure (chain product
+        of adjacent improving steps to best bucket) per performance_period + bucket.
+        Input: output of period_average_matrix.
+        Output: performance_period, from_bucket, prob_default, prob_cure."""
+        new_id = f"chainp_{node_id}"
+        df = self.get_node_data(node_id).collect()
+
+        if bucket_order is None:
+            bucket_order = ["0", "1-30", "31-60", "61-90", "90+"]
+
+        rows = []
+        for pp in df["performance_period"].unique().sort().to_list():
+            sub = df.filter(pl.col("performance_period") == pp)
+            # Build lookup: (from_bucket, to_bucket) -> avg_proportion
+            lookup = {}
+            for r in sub.to_dicts():
+                lookup[(r["from_bucket"], r["to_bucket"])] = r["avg_proportion"]
+
+            for b in bucket_order:
+                # prob_default: chain product of adjacent worsening to last bucket
+                i = bucket_order.index(b)
+                if b == bucket_order[-1]:
+                    pd_val = 1.0
+                else:
+                    pd_val = 1.0
+                    for j in range(i, len(bucket_order) - 1):
+                        pd_val *= lookup.get((bucket_order[j], bucket_order[j + 1]), 0.0)
+
+                # prob_cure: chain product of adjacent improving to first bucket
+                if b == bucket_order[0]:
+                    pc_val = 1.0
+                else:
+                    pc_val = 1.0
+                    for j in range(i, 0, -1):
+                        pc_val *= lookup.get((bucket_order[j], bucket_order[j - 1]), 0.0)
+
+                rows.append({
+                    "performance_period": pp,
+                    "from_bucket": b,
+                    "prob_default": round(pd_val, 6),
+                    "prob_cure": round(pc_val, 6),
+                })
+
+        result = pl.DataFrame(rows) if rows else pl.DataFrame({
+            "performance_period": [], "from_bucket": [],
+            "prob_default": pl.Series([], dtype=pl.Float64),
+            "prob_cure": pl.Series([], dtype=pl.Float64),
+        })
+        return self.save_node_result(result.lazy(), new_id)
+
     def get_chart_image(self, node_id: str) -> str:
         """Retrieve base64 chart image from Redis."""
         chart_key = f"versor:chart:{node_id}"

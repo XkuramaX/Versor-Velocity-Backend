@@ -40,12 +40,17 @@ async def cleanup_task():
 
 @app.on_event("startup")
 async def startup_event():
+    import sys
+    print("[startup] create_tables...", flush=True)
     create_tables()
+    print("[startup] cleanup...", flush=True)
     engine.cleanup_old_files(max_age_hours=24)
+    print("[startup] cleanup_task...", flush=True)
     asyncio.create_task(cleanup_task())
-    # Start the cron scheduler background task
+    print("[startup] scheduler_loop...", flush=True)
     from scheduler.cron_service import scheduler_loop
     asyncio.create_task(scheduler_loop())
+    print("[startup] DONE", flush=True)
 
 engine = DataframeController()
 workflow = WorkflowManager(engine)
@@ -933,6 +938,70 @@ async def get_chart_image(node_id: str):
     if not img:
         raise HTTPException(404, "No chart found for this node")
     return {"chart_image": img}
+
+# --- ROLL-RATE ANALYSIS NODES ---
+
+@app.post("/nodes/rollrate/monthly_snapshot")
+async def monthly_snapshot_node(
+    parent_id: str = Query(...),
+    id_col: str = Body(...),
+    date_col: str = Body(...),
+    value_col: str = Body(...),
+    agg: str = Body("max"),
+):
+    try:
+        res_id = workflow.create_node("monthly_snapshot", {
+            "id_col": id_col, "date_col": date_col, "value_col": value_col, "agg": agg
+        }, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/rollrate/transition_matrix")
+async def transition_matrix_node(
+    parent_id: str = Query(...),
+    id_col: str = Body(...),
+    period_col: str = Body(...),
+    bucket_col: str = Body(...),
+    bucket_order: Optional[List[str]] = Body(None),
+):
+    try:
+        params = {"id_col": id_col, "period_col": period_col, "bucket_col": bucket_col}
+        if bucket_order:
+            params["bucket_order"] = bucket_order
+        res_id = workflow.create_node("transition_matrix", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/rollrate/period_average")
+async def period_average_node(
+    parent_id: str = Query(...),
+    window: int = Body(12),
+    bucket_order: Optional[List[str]] = Body(None),
+):
+    try:
+        params = {"window": window}
+        if bucket_order:
+            params["bucket_order"] = bucket_order
+        res_id = workflow.create_node("period_average_matrix", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/nodes/rollrate/chain_probability")
+async def chain_probability_node(
+    parent_id: str = Query(...),
+    bucket_order: Optional[List[str]] = Body(None),
+):
+    try:
+        params = {}
+        if bucket_order:
+            params["bucket_order"] = bucket_order
+        res_id = workflow.create_node("chain_probability", params, parent_id)
+        return {"node_id": res_id, "metadata": engine.get_node_metadata(res_id)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # --- 16. ORIGINAL MACHINE LEARNING (kept for backwards compat) ---
 

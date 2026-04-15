@@ -113,16 +113,3 @@ class WorkflowSchedule(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
-class ScheduleRunLog(Base):
-    """Log of each scheduled/triggered workflow run."""
-    __tablename__ = "schedule_run_logs"
-
-    id = Column(Integer, primary_key=True, index=True)
-    workflow_id = Column(String(100), ForeignKey("workflows.id"))
-    trigger_type = Column(String(20))       # "cron", "webhook", "manual"
-    started_at = Column(DateTime, default=datetime.utcnow)
-    completed_at = Column(DateTime, nullable=True)
-    status = Column(String(20), default="running")  # running, success, error
-    error_message = Column(Text, nullable=True)
-    node_results = Column(Text, default="[]")       # JSON: [{node_id, backend_id, status}]
-    triggered_by = Column(String(100), default="scheduler")

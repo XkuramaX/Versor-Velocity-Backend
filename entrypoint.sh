@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+export PYTHONUNBUFFERED=1
+
 echo "Initialising backend database..."
 python -c "from database import create_tables; create_tables(); print('DB tables ready.')"
 

@@ -96,6 +96,8 @@ class WorkflowManager:
         'add_literal_column', 'range_bucket', 'date_offset', 'crosstab', 'cumulative_product',
         # Enhanced regression + stats + charts
         'ols_regression', 't_test', 'f_test', 'chi_square_test', 'dw_test', 'anova_test', 'chart_node',
+        # Roll-rate analysis
+        'monthly_snapshot', 'transition_matrix', 'period_average_matrix', 'chain_probability',
     }
 
     # ── Param whitelist (prevents mass-assignment) ────────────────────────────
@@ -168,6 +170,11 @@ class WorkflowManager:
         'dw_test':                        {'residuals_col'},
         'anova_test':                     {'value_col', 'group_col'},
         'chart_node':                     {'chart_type', 'x_col', 'y_col', 'color_col', 'title', 'bins', 'agg'},
+        # Roll-rate analysis
+        'monthly_snapshot':                {'id_col', 'date_col', 'value_col', 'agg'},
+        'transition_matrix':               {'id_col', 'period_col', 'bucket_col', 'bucket_order'},
+        'period_average_matrix':           {'window', 'bucket_order'},
+        'chain_probability':               {'bucket_order'},
     }
 
     def _execute_controller_method(self, node_type: str, params: Dict[str, Any], parent_id: str):

@@ -2,9 +2,9 @@
 Headless Workflow Runner
 ────────────────────────
 Executes a saved workflow server-side without the UI.
-- For upload_csv nodes: picks files from the watched folder
+- For upload_csv/upload_excel nodes: matches files from the watched folder by node label
 - For read_from_db nodes: executes the query directly
-- Logs results per node
+- Logs results to WorkflowRun (shared with UI runner)
 """
 
 import json
@@ -14,7 +14,7 @@ from typing import Optional
 from controllers.DataframeController import DataframeController
 from controllers.WorkflowManager import WorkflowManager
 
-WATCHED_FOLDER_BASE = os.environ.get("WATCHED_FOLDER", "/app/watched_files")
+WATCHED_FOLDER_BASE = os.environ.get("WATCHED_FOLDER", os.path.join(os.path.dirname(os.path.dirname(__file__)), "watched_files"))
 
 
 def get_workflow_folder(workflow_id: str) -> str:
@@ -23,21 +23,41 @@ def get_workflow_folder(workflow_id: str) -> str:
     return folder
 
 
-def _find_file(folder: str, label: str) -> Optional[str]:
+def _find_file_for_node(folder: str, node_label: str, node_id: str) -> Optional[str]:
+    """Match a watched-folder file to an upload node.
+
+    Matching priority:
+    1. Exact filename match against node label (e.g. label="employees.csv" → employees.csv)
+    2. Label prefix match (label="employees" → employees.csv or employees.xlsx)
+    3. Filename contains node_id (explicit mapping via rename)
+    """
     if not os.path.exists(folder):
         return None
     files = os.listdir(folder)
     if not files:
         return None
+
+    label = (node_label or "").strip()
+
+    # 1. Exact match on label
     for f in files:
-        if f.lower() == (label or "").lower():
+        if f.lower() == label.lower():
             return os.path.join(folder, f)
-    csv_files = [f for f in files if f.endswith(".csv")]
-    if csv_files:
-        return os.path.join(folder, csv_files[0])
-    excel_files = [f for f in files if f.endswith(".xlsx") or f.endswith(".xls")]
-    if excel_files:
-        return os.path.join(folder, excel_files[0])
+
+    # 2. Label prefix match (label without extension matches file stem)
+    label_stem = os.path.splitext(label)[0].lower()
+    if label_stem:
+        for f in files:
+            if os.path.splitext(f)[0].lower() == label_stem:
+                return os.path.join(folder, f)
+
+    # 3. File contains node_id
+    short_id = node_id[:8] if node_id else ""
+    if short_id:
+        for f in files:
+            if short_id in f:
+                return os.path.join(folder, f)
+
     return None
 
 
@@ -66,8 +86,26 @@ def _resolve_method(node_type: str, config: dict) -> str:
         "dw_test": "dw_test", "anova_test": "anova_test", "chart": "chart_node",
         "add_literal_column": "add_literal_column", "range_bucket": "range_bucket",
         "date_offset": "date_offset", "crosstab": "crosstab", "cumulative_product": "cumulative_product",
+        "monthly_snapshot": "monthly_snapshot", "transition_matrix": "transition_matrix",
+        "period_average_matrix": "period_average_matrix", "chain_probability": "chain_probability",
     }
     return mapping.get(node_type)
+
+
+def list_upload_nodes(workflow_data: str) -> list:
+    """Return [{node_id, label, nodeType}] for all upload nodes in a workflow."""
+    try:
+        wf = json.loads(workflow_data)
+    except json.JSONDecodeError:
+        return []
+    nodes = wf.get("nodes", [])
+    result = []
+    for n in nodes:
+        data = n.get("data", {})
+        nt = data.get("nodeType", "")
+        if nt in ("upload_csv", "upload_excel"):
+            result.append({"node_id": n["id"], "label": data.get("label", ""), "nodeType": nt})
+    return result
 
 
 def run_workflow_headless(workflow_id: str, workflow_data: str) -> dict:
@@ -117,18 +155,24 @@ def run_workflow_headless(workflow_id: str, workflow_data: str) -> dict:
 
         try:
             if nt == "upload_csv":
-                fp = _find_file(folder, label)
+                fp = _find_file_for_node(folder, label, fid)
                 if not fp:
-                    raise FileNotFoundError(f"No file for '{label}' in {folder}")
+                    raise FileNotFoundError(
+                        f"No file matched for node '{label}' (id: {fid[:8]}). "
+                        f"Upload a file named '{label}' to the Data Files tab."
+                    )
                 lf = pl.scan_csv(fp)
                 bid = engine.save_node_result(lf, f"src_{fid[:8]}")
                 wf_manager.nodes[bid] = {"type": "upload_csv", "params": {}, "parent": None, "children": []}
                 backend_ids[fid] = bid
 
             elif nt == "upload_excel":
-                fp = _find_file(folder, label)
+                fp = _find_file_for_node(folder, label, fid)
                 if not fp:
-                    raise FileNotFoundError(f"No file for '{label}' in {folder}")
+                    raise FileNotFoundError(
+                        f"No file matched for node '{label}' (id: {fid[:8]}). "
+                        f"Upload a file named '{label}' to the Data Files tab."
+                    )
                 lf = pl.read_excel(fp, sheet_name=config.get("sheet_name", "Sheet1")).lazy()
                 bid = engine.save_node_result(lf, f"src_{fid[:8]}")
                 backend_ids[fid] = bid

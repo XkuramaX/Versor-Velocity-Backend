@@ -16,27 +16,28 @@ class InputValidationMiddleware(BaseHTTPMiddleware):
     }
     
     async def dispatch(self, request: Request, call_next):
-        # Validate content length for file uploads
-        if request.url.path.startswith('/nodes/io/upload'):
+        # Validate content length
+        content_type = request.headers.get('content-type', '')
+        is_file_upload = (
+            request.url.path.startswith('/nodes/io/upload')
+            or '/files/upload' in request.url.path
+            or 'multipart/form-data' in content_type
+        )
+
+        if is_file_upload:
             content_length = request.headers.get('content-length')
-            if content_length:
-                content_length = int(content_length)
-                if content_length > self.MAX_FILE_SIZE:
-                    raise HTTPException(
-                        status_code=413,
-                        detail=f"File too large. Maximum size is {self.MAX_FILE_SIZE / 1024 / 1024}MB"
-                    )
-        
-        # Validate JSON body size
+            if content_length and int(content_length) > self.MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum size is {self.MAX_FILE_SIZE / 1024 / 1024}MB"
+                )
         elif request.method in ['POST', 'PUT', 'PATCH']:
             content_length = request.headers.get('content-length')
-            if content_length:
-                content_length = int(content_length)
-                if content_length > self.MAX_JSON_SIZE:
-                    raise HTTPException(
-                        status_code=413,
-                        detail=f"Request body too large. Maximum size is {self.MAX_JSON_SIZE / 1024 / 1024}MB"
-                    )
+            if content_length and int(content_length) > self.MAX_JSON_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Request body too large. Maximum size is {self.MAX_JSON_SIZE / 1024 / 1024}MB"
+                )
         
         response = await call_next(request)
         return response
